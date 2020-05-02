@@ -1,0 +1,5 @@
+{
+  "Name":     "ircd",
+  "Network":  "My IRC Network",
+  "Port":     6667
+}
