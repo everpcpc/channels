@@ -1,21 +1,27 @@
 package state
 
+import (
+	"fmt"
+
+	"mcdc/storage"
+)
+
 type User struct {
 	name     string
 	channels map[*Channel]bool
-	sink     Sink
+	send     func(*storage.Message)
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("<User:%s>", u.name)
 }
 
 func (u *User) GetName() string {
 	return u.name
 }
 
-func (u *User) Send(msg SinkMessage) {
-	u.sink.Send(msg)
-}
-
-func (u *User) AddSink(sink Sink) {
-	u.sink = sink
+func (u *User) SetSendFn(fn func(*storage.Message)) {
+	u.send = fn
 }
 
 // forChannels iterates over all of the channels that the user has joined and

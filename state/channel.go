@@ -1,14 +1,23 @@
 package state
 
+import (
+	"fmt"
+	"mcdc/storage"
+)
+
 type Channel struct {
 	name string
 
 	users map[*User]bool
 }
 
-func (ch *Channel) Send(msg SinkMessage) {
+func (ch *Channel) String() string {
+	return fmt.Sprintf("<Channel:%s>", ch.name)
+}
+
+func (ch *Channel) Send(msg *storage.Message) {
 	for user := range ch.users {
-		user.sink.Send(msg)
+		user.send(msg)
 	}
 }
 

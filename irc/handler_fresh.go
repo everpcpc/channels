@@ -1,6 +1,10 @@
 package irc
 
-import "mcdc/state"
+import (
+	"mcdc/state"
+
+	"github.com/sirupsen/logrus"
+)
 
 // freshHandler is a handler for a brand new connection that has not been
 // registered yet.
@@ -32,17 +36,18 @@ func (h *freshHandler) handleNick(conn connection, msg message) handler {
 	defer func() { h.state <- s }()
 
 	if len(msg.params) < 1 {
-		sendNumeric(s, conn, errorNoNicknameGiven)
+		sendNumeric(s, conn.send, errorNoNicknameGiven)
 		return h
 	}
 	nick := msg.params[0]
 
 	user := s.NewUser(nick)
 	if user == nil {
-		sendNumeric(s, conn, errorNicknameInUse)
+		sendNumeric(s, conn.send, errorNicknameInUse)
 		return h
 	}
-	user.AddSink(conn)
+
+	user.SetSendFn(messageSink(conn))
 
 	return &freshUserHandler{state: h.state, user: user}
 }
@@ -82,12 +87,13 @@ func (h *freshUserHandler) handleUser(conn connection, msg message) handler {
 
 	var trailing = msg.laxTrailing(3)
 	if len(msg.params) < 3 || trailing == "" {
-		sendNumeric(s, h.user, errorNeedMoreParams)
+		sendNumericUser(s, h.user, conn.send, errorNeedMoreParams)
 		return h
 	}
-	logf(debug, "handleUser %+v", msg)
 
-	sendMOTD(s, h.user)
+	logrus.Debugf("handleUser: %+v", msg)
+
+	sendMOTD(s, h.user, conn.send)
 
 	return newUserHandler(h.state, h.user.GetName())
 }

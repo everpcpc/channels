@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/sirupsen/logrus"
+
 	"mcdc/api"
 	"mcdc/irc"
 )
@@ -30,6 +32,8 @@ func main() {
 
 		log.SetFlags(log.Ldate | log.Ltime)
 		irc.SetLogLevel(4)
+
+		logrus.SetLevel(logrus.DebugLevel)
 
 		irc.RunServer(config)
 

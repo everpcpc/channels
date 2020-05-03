@@ -2,6 +2,7 @@ package irc
 
 import (
 	"fmt"
+
 	"mcdc/state"
 )
 
@@ -11,7 +12,7 @@ const (
 )
 
 // sendMOTD will send the message of the day to a relay.
-func sendMOTD(s state.State, sink state.Sink) {
-	sendNumericTrailing(s, sink, replyMOTDStart, fmt.Sprintf(motdHeader, s.GetName()))
-	sendNumericTrailing(s, sink, replyEndOfMOTD, motdFooter)
+func sendMOTD(s state.State, user *state.User, sink sink) {
+	sendNumericUser(s, user, sink, replyMOTDStart.withTrailing(fmt.Sprintf(motdHeader, s.GetName())))
+	sendNumericUser(s, user, sink, replyMOTDStart.withTrailing(motdFooter))
 }

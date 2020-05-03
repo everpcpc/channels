@@ -1,6 +1,10 @@
 package irc
 
-import "mcdc/state"
+import (
+	"strings"
+
+	"mcdc/state"
+)
 
 type commandMap map[string]func(state.State, *state.User, connection, message) handler
 
@@ -58,4 +62,69 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 
 func (h *userHandler) handleCmdDummy(s state.State, user *state.User, conn connection, msg message) handler {
 	return h
+}
+
+func (h *userHandler) handleCmdPing(s state.State, user *state.User, conn connection, msg message) handler {
+	name := s.GetName()
+	conn.send(cmdPong.withPrefix(name).withParams(name).withTrailing(name))
+	return h
+}
+
+func (h *userHandler) handleCmdJoin(s state.State, user *state.User, conn connection, msg message) handler {
+	if len(msg.params) == 0 {
+		sendNumericUser(s, user, conn.send, errorNeedMoreParams)
+		return h
+	}
+	channels := strings.Split(msg.params[0], ",")
+
+	for i := 0; i < len(channels); i++ {
+		name := channels[i]
+		channel := s.GetChannel(name)
+		if channel == nil {
+			channel = s.NewChannel(name)
+			defer s.RecycleChannel(channel)
+		}
+
+		if channel == nil {
+			sendNumericUser(s, user, conn.send, errorNoSuchChannel, name)
+			continue
+		}
+
+		s.JoinChannel(channel, user)
+	}
+
+	return h
+}
+
+func (h *userHandler) handleCmdPart(s state.State, user *state.User, conn connection, msg message) handler {
+	if len(msg.params) == 0 {
+		sendNumericUser(s, user, conn.send, errorNeedMoreParams)
+		return h
+	}
+
+	reason := msg.laxTrailing(1)
+	channels := strings.Split(msg.params[0], ",")
+	for i := 0; i < len(channels); i++ {
+		name := channels[i]
+		channel := s.GetChannel(name)
+
+		if channel == nil {
+			sendNumericUser(s, user, conn.send, errorNoSuchChannel)
+			continue
+		}
+
+		if !channel.HasUser(user) {
+			sendNumericUser(s, user, conn.send, errorNotOnChannel)
+			continue
+		}
+
+		s.PartChannel(channel, user, reason)
+	}
+	return h
+}
+
+func (h *userHandler) handleCmdQuit(s state.State, user *state.User, conn connection, msg message) handler {
+	s.RemoveUser(user)
+	conn.kill()
+	return nullHandler{}
 }

@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/sirupsen/logrus"
+
 	"mcdc/state"
+	"mcdc/storage"
 )
 
 // RunServer starts the IRC server. This method will not return.
@@ -36,13 +39,23 @@ func RunServer(cfg Config) {
 			logf(fatal, "Could not create TLS server: %v", err)
 		}
 	}
+
+	store, err := storage.New("redis", "localhost:6379")
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
 	name := "ircd"
+	st := state.New(name, store)
+	go st.Pulling()
+
 	s := make(chan state.State, 1)
-	s <- state.New(name)
+	s <- st
 
 	if lnSSL != nil {
 		go acceptLoop(cfg, lnSSL, s)
 	}
+
 	acceptLoop(cfg, ln, s)
 }
 

@@ -5,13 +5,13 @@ import (
 	"net"
 	"time"
 
-	"mcdc/state"
+	"github.com/sirupsen/logrus"
 )
 
 // connection corresponds to some end-point that has connected to the IRC
 // server.
 type connection interface {
-	state.Sink
+	send(message)
 
 	// loop reads messages from the connection and passes them to the handler.
 	loop()
@@ -24,7 +24,7 @@ type connectionImpl struct {
 	config    Config
 	conn      net.Conn
 	handler   handler
-	inbox     chan state.SinkMessage
+	inbox     chan message
 	inject    chan message // Allows the connection to inject messages.
 	gotPong   chan struct{}
 	killPing  chan struct{}
@@ -39,7 +39,7 @@ func newConnection(config Config, conn net.Conn, handler handler) connection {
 		config:    config,
 		conn:      conn,
 		handler:   handler,
-		inbox:     make(chan state.SinkMessage),
+		inbox:     make(chan message),
 		inject:    make(chan message, 1),
 		gotPong:   make(chan struct{}, 1),
 		killPing:  make(chan struct{}, 1),
@@ -48,7 +48,7 @@ func newConnection(config Config, conn net.Conn, handler handler) connection {
 	}
 }
 
-func (c *connectionImpl) Send(msg state.SinkMessage) {
+func (c *connectionImpl) send(msg message) {
 	c.inbox <- msg
 }
 
@@ -93,7 +93,7 @@ func (c *connectionImpl) readLoop() {
 				c.gotPong <- struct{}{}
 			}
 
-			logf(debug, "< %+v", msg)
+			logrus.Debugf("recv: %+v", msg)
 			didQuit = didQuit || msg.command == cmdQuit.command
 			c.handler = c.handler.handle(c, msg)
 		}
@@ -104,11 +104,11 @@ func (c *connectionImpl) readLoop() {
 	// If there was never a QUIT message then this is a premature termination and
 	// a quit message should be faked.
 	if !didQuit {
-		logf(debug, "Injecting QUIT for prematurely disconnected client.")
+		logrus.Debugln("Injecting QUIT for prematurely disconnected client.")
 		c.handler = c.handler.handle(c, cmdQuit.withTrailing("QUITing"))
 	}
 
-	logf(debug, "Closing read loop.")
+	logrus.Debugln("Closing read loop.")
 }
 
 func (c *connectionImpl) writeLoop() {
@@ -118,22 +118,22 @@ func (c *connectionImpl) writeLoop() {
 		case <-c.killWrite:
 			alive = false
 		case msg := <-c.inbox:
-			logf(debug, "> %+v", msg)
+			logrus.Debugf("send: %+v", msg)
 
-			line, ok := msg.String()
+			line, ok := msg.toString()
 			if !ok {
 				break
 			}
 
 			_, err := io.WriteString(c.conn, line)
 			if err != nil {
-				logf(warn, "Error encountered sending message to client: %v", err)
+				logrus.Warnf("Error encountered sending message to client: %v", err)
 				// break
 			}
 		}
 	}
 
-	logf(debug, "Closing write loop.")
+	logrus.Debugln("Closing write loop.")
 	c.conn.Close()
 }
 
@@ -156,6 +156,6 @@ func (c *connectionImpl) pingLoop() {
 			pongTimer = time.After(pongDuration)
 		}
 	}
+	logrus.Debugln("Closing ping loop.")
 
-	logf(debug, "Closing ping loop.")
 }

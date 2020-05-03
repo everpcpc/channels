@@ -1,6 +1,10 @@
 package state
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+
+	"mcdc/storage"
+)
 
 // State represents the state of this server.
 // State is not safe for concurrent access.
@@ -45,18 +49,22 @@ type State interface {
 	// not send any messages to the channel or user. The channel will also be
 	// reaped if there are no active users left.
 	RemoveFromChannel(*Channel, *User)
+
+	Pulling()
 }
 
 // stateImpl is a concrete implementation of the State interface.
 type stateImpl struct {
 	name     string
+	backend  storage.Backend
 	channels map[string]*Channel
 	users    map[string]*User
 }
 
-func New(name string) State {
+func New(name string, backend storage.Backend) State {
 	return &stateImpl{
 		name:     name,
+		backend:  backend,
 		channels: make(map[string]*Channel),
 		users:    make(map[string]*User),
 	}
@@ -115,16 +123,21 @@ func (s *stateImpl) NewChannel(name string) *Channel {
 		name:  name,
 		users: make(map[*User]bool),
 	}
-	s.channels[name] = ch
+	if err := s.backend.Subscribe(name); err != nil {
+		logrus.Errorf("new channel failed to subscribe: %v", err)
+	} else {
+		s.channels[name] = ch
+	}
+	logrus.Debugf("new channel: %s", ch)
+
 	return ch
 }
 
 func (s *stateImpl) RecycleChannel(channel *Channel) {
-	logrus.Debugf("Recycling channel %+v", channel)
-
 	if channel == nil || len(channel.users) != 0 {
 		return
 	}
+	logrus.Debugf("Recycling channel %+v", channel)
 	delete(s.channels, channel.name)
 }
 
@@ -134,7 +147,7 @@ func (s *stateImpl) JoinChannel(channel *Channel, user *User) {
 		return
 	}
 
-	logrus.Debugf("Adding %+v to %+v", user, channel)
+	logrus.Debugf("Adding %s to %s", user, channel)
 
 	channel.users[user] = true
 	user.channels[channel] = true
@@ -156,4 +169,20 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 	delete(channel.users, user)
 
 	s.RecycleChannel(channel)
+}
+
+func (s *stateImpl) Pulling() {
+	var ch chan storage.Message
+	go s.backend.PullLoop(ch)
+	var channel *Channel
+
+	for msg := range ch {
+		channel = s.GetChannel(msg.Channel)
+		if channel == nil {
+			continue
+		}
+		channel.Send(&msg)
+		channel = nil
+	}
+
 }

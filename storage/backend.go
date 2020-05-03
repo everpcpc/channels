@@ -4,6 +4,8 @@ import "fmt"
 
 type Backend interface {
 	Save(Message) error
+	PullLoop(chan Message)
+	Subscribe(string) error
 }
 
 func New(store, addr string) (Backend, error) {

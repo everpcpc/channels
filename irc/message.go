@@ -44,8 +44,8 @@ func (m message) laxTrailing(minIndex int) string {
 	return m.params[l-1]
 }
 
-// String serializes a Message to an IRC protocol compatible string.
-func (m message) String() (string, bool) {
+// toString serializes a Message to an IRC protocol compatible string.
+func (m message) toString() (string, bool) {
 	if m.command == "" {
 		return "", false
 	}
