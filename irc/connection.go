@@ -4,12 +4,14 @@ import (
 	"io"
 	"net"
 	"time"
+
+	"mcdc/state"
 )
 
 // connection corresponds to some end-point that has connected to the IRC
 // server.
 type connection interface {
-	sink
+	state.Sink
 
 	// loop reads messages from the connection and passes them to the handler.
 	loop()
@@ -22,7 +24,7 @@ type connectionImpl struct {
 	config    Config
 	conn      net.Conn
 	handler   handler
-	inbox     chan message
+	inbox     chan state.SinkMessage
 	inject    chan message // Allows the connection to inject messages.
 	gotPong   chan struct{}
 	killPing  chan struct{}
@@ -37,7 +39,7 @@ func newConnection(config Config, conn net.Conn, handler handler) connection {
 		config:    config,
 		conn:      conn,
 		handler:   handler,
-		inbox:     make(chan message),
+		inbox:     make(chan state.SinkMessage),
 		inject:    make(chan message, 1),
 		gotPong:   make(chan struct{}, 1),
 		killPing:  make(chan struct{}, 1),
@@ -46,7 +48,7 @@ func newConnection(config Config, conn net.Conn, handler handler) connection {
 	}
 }
 
-func (c *connectionImpl) send(msg message) {
+func (c *connectionImpl) Send(msg state.SinkMessage) {
 	c.inbox <- msg
 }
 
@@ -118,7 +120,7 @@ func (c *connectionImpl) writeLoop() {
 		case msg := <-c.inbox:
 			logf(debug, "> %+v", msg)
 
-			line, ok := msg.toString()
+			line, ok := msg.String()
 			if !ok {
 				break
 			}

@@ -17,7 +17,7 @@ func (m message) withParams(params ...string) message {
 	return m
 }
 
-// withParams creates a new copy of a message with the given parameters.
+// withTrailing creates a new copy of a message with the given parameters.
 func (m message) withTrailing(trailing string) message {
 	m.trailing = trailing
 	return m
@@ -44,8 +44,8 @@ func (m message) laxTrailing(minIndex int) string {
 	return m.params[l-1]
 }
 
-// toString serializes a Message to an IRC protocol compatible string.
-func (m message) toString() (string, bool) {
+// String serializes a Message to an IRC protocol compatible string.
+func (m message) String() (string, bool) {
 	if m.command == "" {
 		return "", false
 	}

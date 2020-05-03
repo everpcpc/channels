@@ -1,30 +1,31 @@
 package irc
 
 import (
+	"mcdc/state"
 	"strings"
 )
 
-func (h *userHandler) handleCmdJoin(state state, user *user, conn connection, msg message) handler {
+func (h *userHandler) handleCmdJoin(s state.State, user *state.User, conn connection, msg message) handler {
 	if len(msg.params) == 0 {
-		sendNumeric(state, user, errorNeedMoreParams)
+		sendNumeric(s, user, errorNeedMoreParams)
 		return h
 	}
 	channels := strings.Split(msg.params[0], ",")
 
 	for i := 0; i < len(channels); i++ {
 		name := channels[i]
-		channel := state.getChannel(name)
+		channel := s.GetChannel(name)
 		if channel == nil {
-			channel = state.newChannel(name)
-			defer state.recycleChannel(channel)
+			channel = s.NewChannel(name)
+			defer s.RecycleChannel(channel)
 		}
 
 		if channel == nil {
-			sendNumeric(state, user, errorNoSuchChannel, name)
+			sendNumeric(s, user, errorNoSuchChannel, name)
 			continue
 		}
 
-		state.joinChannel(channel, user)
+		s.JoinChannel(channel, user)
 	}
 
 	return h

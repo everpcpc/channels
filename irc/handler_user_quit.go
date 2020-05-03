@@ -1,7 +1,9 @@
 package irc
 
-func (h *userHandler) handleCmdQuit(state state, user *user, conn connection, msg message) handler {
-	state.removeUser(user)
+import "mcdc/state"
+
+func (h *userHandler) handleCmdQuit(s state.State, user *state.User, conn connection, msg message) handler {
+	s.RemoveUser(user)
 	conn.kill()
 	return nullHandler{}
 }

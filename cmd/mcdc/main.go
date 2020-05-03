@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 
+	"mcdc/api"
 	"mcdc/irc"
 )
 
 func main() {
 
 	if len(os.Args) < 2 {
-		fmt.Println("expected subcommand: irc")
+		fmt.Println("expected subcommand: irc, api")
 		os.Exit(1)
 	}
 
@@ -32,8 +33,15 @@ func main() {
 		}
 		irc.RunServer(cfg)
 
+	case "api":
+		apiCmd := flag.NewFlagSet("irc", flag.ExitOnError)
+		apiPort := apiCmd.Int("port", 8080, "listen port for api server")
+		apiCmd.Parse(os.Args[2:])
+
+		api.RunServer(*apiPort)
+
 	default:
-		fmt.Println("expected subcommand: irc")
+		fmt.Println("expected subcommand: irc, api")
 		os.Exit(1)
 	}
 }

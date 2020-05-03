@@ -1,18 +1,20 @@
 package irc
 
-type commandMap map[string]func(state, *user, connection, message) handler
+import "mcdc/state"
+
+type commandMap map[string]func(state.State, *state.User, connection, message) handler
 
 // userHandler is a handler that handles messages coming from a user connection
 // that has successfully associated with the client.
 type userHandler struct {
-	state    chan state
+	state    chan state.State
 	nick     string
 	commands commandMap
 }
 
-func newUserHandler(state chan state, nick string) handler {
+func newUserHandler(s chan state.State, nick string) handler {
 	handler := &userHandler{
-		state: state,
+		state: s,
 		nick:  nick,
 	}
 	handler.commands = commandMap{
@@ -31,16 +33,16 @@ func newUserHandler(state chan state, nick string) handler {
 }
 
 func (h *userHandler) closed(conn connection) {
-	state := <-h.state
-	defer func() { h.state <- state }()
+	s := <-h.state
+	defer func() { h.state <- s }()
 
-	state.removeUser(state.getUser(h.nick))
+	s.RemoveUser(s.GetUser(h.nick))
 	conn.kill()
 }
 
 func (h *userHandler) handle(conn connection, msg message) handler {
-	state := <-h.state
-	defer func() { h.state <- state }()
+	s := <-h.state
+	defer func() { h.state <- s }()
 
 	command := h.commands[msg.command]
 	if command == nil {
@@ -48,12 +50,12 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 		return h
 	}
 
-	user := state.getUser(h.nick)
-	newHandler := command(state, user, conn, msg)
-	h.nick = user.nick
+	user := s.GetUser(h.nick)
+	newHandler := command(s, user, conn, msg)
+	h.nick = user.GetName()
 	return newHandler
 }
 
-func (h *userHandler) handleCmdDummy(state state, user *user, conn connection, msg message) handler {
+func (h *userHandler) handleCmdDummy(s state.State, user *state.User, conn connection, msg message) handler {
 	return h
 }

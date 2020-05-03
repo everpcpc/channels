@@ -1,7 +1,9 @@
 package irc
 
-func (h *userHandler) handleCmdPing(state state, user *user, conn connection, msg message) handler {
-	name := state.getConfig().Name
-	conn.send(cmdPong.withPrefix(name).withParams(name).withTrailing(name))
+import "mcdc/state"
+
+func (h *userHandler) handleCmdPing(s state.State, user *state.User, conn connection, msg message) handler {
+	name := s.GetName()
+	conn.Send(cmdPong.withPrefix(name).withParams(name).withTrailing(name))
 	return h
 }

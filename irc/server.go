@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+
+	"mcdc/state"
 )
 
 // RunServer starts the IRC server. This method will not return.
@@ -34,17 +36,17 @@ func RunServer(cfg Config) {
 			logf(fatal, "Could not create TLS server: %v", err)
 		}
 	}
-
-	state := make(chan state, 1)
-	state <- newState(cfg)
+	name := "ircd"
+	s := make(chan state.State, 1)
+	s <- state.New(name)
 
 	if lnSSL != nil {
-		go acceptLoop(cfg, lnSSL, state)
+		go acceptLoop(cfg, lnSSL, s)
 	}
-	acceptLoop(cfg, ln, state)
+	acceptLoop(cfg, ln, s)
 }
 
-func acceptLoop(cfg Config, listener net.Listener, state chan state) {
+func acceptLoop(cfg Config, listener net.Listener, s chan state.State) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -52,7 +54,7 @@ func acceptLoop(cfg Config, listener net.Listener, state chan state) {
 			continue
 		}
 
-		c := newConnection(cfg, conn, newFreshHandler(state))
+		c := newConnection(cfg, conn, newFreshHandler(s))
 		go c.loop()
 	}
 }
