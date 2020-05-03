@@ -19,5 +19,5 @@ func postMessage(c *gin.Context) {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "sent succeed"})
+	c.JSON(200, gin.H{"status": "success"})
 }

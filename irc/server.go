@@ -42,7 +42,7 @@ func RunServer(cfg Config) {
 
 	store, err := storage.New("redis", "localhost:6379")
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("init store failed: %v", err)
 	}
 
 	name := "ircd"

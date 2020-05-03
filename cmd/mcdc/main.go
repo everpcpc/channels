@@ -28,13 +28,14 @@ func main() {
 		ircCmd.IntVar(&config.PingFrequency, "ping", 30, "ping frequency to client in seconds")
 		ircCmd.IntVar(&config.PongMaxLatency, "timeout", 5, "client pong response timeout in seconds")
 		ircCmd.Parse(os.Args[2:])
+		// TODO: ssl flags
 
 		logrus.SetLevel(logrus.InfoLevel)
 
 		irc.RunServer(config)
 
 	case "api":
-		apiCmd := flag.NewFlagSet("irc", flag.ExitOnError)
+		apiCmd := flag.NewFlagSet("api", flag.ExitOnError)
 		apiPort := apiCmd.Int("port", 8080, "listen port for api server")
 		apiCmd.Parse(os.Args[2:])
 

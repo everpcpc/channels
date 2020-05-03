@@ -55,7 +55,7 @@ func (b *BackendRedis) PullLoop(dst chan Message) {
 
 		switch mi := msgi.(type) {
 		case *redis.Subscription:
-			logrus.Infof("%s succeeded to %s", mi.Kind, mi.Channel)
+			logrus.Infof("%s %s", mi.Kind, mi.Channel)
 		case *redis.Message:
 			var msg Message
 			err = json.Unmarshal([]byte(mi.Payload), &msg)

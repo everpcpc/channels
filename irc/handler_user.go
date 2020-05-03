@@ -3,8 +3,6 @@ package irc
 import (
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"mcdc/state"
 )
 
@@ -53,7 +51,6 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 
 	command := h.commands[msg.command]
 	if command == nil {
-		logrus.Warnf("unknown command from %s: %s\n", h.nick, msg.command)
 		return h
 	}
 

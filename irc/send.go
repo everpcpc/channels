@@ -3,8 +3,6 @@ package irc
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
-
 	"mcdc/state"
 )
 
@@ -35,7 +33,6 @@ func sendIntro(s state.State, user *state.User, sink sink) {
 // sendNames sends the messages associated with a NAMES request.
 func sendNames(s state.State, user *state.User, sink sink, channels ...*state.Channel) {
 	for _, channel := range channels {
-		logrus.Debugf("send names: %v", channel)
 		params := []string{"=", channel.GetName()}
 		sendNumericUser(s, user, sink, replyNamReply.withTrailing(user.GetName()), params...)
 		sendNumericUser(s, user, sink, replyEndOfNames.withTrailing("End NAMES"), channel.GetName())
