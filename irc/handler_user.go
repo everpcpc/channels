@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"mcdc/state"
+
+	"github.com/sirupsen/logrus"
 )
 
 type commandMap map[string]func(state.State, *state.User, connection, message) handler
@@ -55,6 +57,8 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 	}
 
 	user := s.GetUser(h.nick)
+	logrus.Infof("command: %+v", msg)
+
 	newHandler := command(s, user, conn, msg)
 	h.nick = user.GetName()
 	return newHandler

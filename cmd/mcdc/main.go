@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"mcdc/api"
+	"mcdc/auth"
 	"mcdc/irc"
 )
 
@@ -32,7 +33,7 @@ func main() {
 
 		logrus.SetLevel(logrus.InfoLevel)
 
-		irc.RunServer(config)
+		irc.RunServer(config, auth.Anonymous{})
 
 	case "api":
 		apiCmd := flag.NewFlagSet("api", flag.ExitOnError)

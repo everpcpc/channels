@@ -3,6 +3,7 @@ package state
 import (
 	"github.com/sirupsen/logrus"
 
+	"mcdc/auth"
 	"mcdc/storage"
 )
 
@@ -55,18 +56,20 @@ type State interface {
 
 // stateImpl is a concrete implementation of the State interface.
 type stateImpl struct {
-	name     string
-	backend  storage.Backend
-	channels map[string]*Channel
-	users    map[string]*User
+	name       string
+	store      storage.Backend
+	authPlugin auth.Plugin
+	channels   map[string]*Channel
+	users      map[string]*User
 }
 
-func New(name string, backend storage.Backend) State {
+func New(name string, store storage.Backend, authPlugin auth.Plugin) State {
 	return &stateImpl{
-		name:     name,
-		backend:  backend,
-		channels: make(map[string]*Channel),
-		users:    make(map[string]*User),
+		name:       name,
+		store:      store,
+		authPlugin: authPlugin,
+		channels:   make(map[string]*Channel),
+		users:      make(map[string]*User),
 	}
 }
 
@@ -119,7 +122,7 @@ func (s *stateImpl) NewChannel(name string) *Channel {
 		return nil
 	}
 
-	if err := s.backend.Subscribe(name); err != nil {
+	if err := s.store.Subscribe(name); err != nil {
 		logrus.Errorf("subscribe error for %s: %v", name, err)
 		return nil
 	}
@@ -139,7 +142,7 @@ func (s *stateImpl) RecycleChannel(channel *Channel) {
 		return
 	}
 	logrus.Debugf("Recycling channel %+v", channel)
-	err := s.backend.UnSubscribe(channel.name)
+	err := s.store.UnSubscribe(channel.name)
 	if err != nil {
 		logrus.Errorf("subscribe error for %s: %v", channel.name, err)
 		return
@@ -180,7 +183,7 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 
 func (s *stateImpl) Pulling() {
 	ch := make(chan storage.Message)
-	go s.backend.PullLoop(ch)
+	go s.store.PullLoop(ch)
 
 	for msg := range ch {
 		channel := s.GetChannel(msg.Channel)

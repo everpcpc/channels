@@ -2,6 +2,8 @@ package irc
 
 import (
 	"mcdc/state"
+
+	"github.com/sirupsen/logrus"
 )
 
 // freshHandler is a handler for a brand new connection that has not been
@@ -20,18 +22,21 @@ func (h *freshHandler) handle(conn connection, msg message) handler {
 		return nullHandler{}
 	}
 	if msg.command != cmdNick.command {
+		logrus.Infof("early command: %+v", msg)
 		return h
 	}
-	return h.handleNick(conn, msg)
+	return h.handlePass(conn, msg)
 }
 
 func (_ *freshHandler) closed(c connection) {
 	c.kill()
 }
 
-func (h *freshHandler) handleNick(conn connection, msg message) handler {
+func (h *freshHandler) handlePass(conn connection, msg message) handler {
 	s := <-h.state
 	defer func() { h.state <- s }()
+
+	logrus.Infof("command PASS: %+v", msg)
 
 	if len(msg.params) < 1 {
 		sendNumeric(s, conn.send, errorNoNicknameGiven)

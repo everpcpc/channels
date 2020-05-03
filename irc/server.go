@@ -7,12 +7,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"mcdc/auth"
 	"mcdc/state"
 	"mcdc/storage"
 )
 
 // RunServer starts the IRC server. This method will not return.
-func RunServer(cfg Config) {
+func RunServer(cfg Config, authPlugin auth.Plugin) {
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		logrus.Fatalf("Could not create server: %v", err)
@@ -45,8 +46,7 @@ func RunServer(cfg Config) {
 		logrus.Fatalf("init store failed: %v", err)
 	}
 
-	name := "ircd"
-	st := state.New(name, store)
+	st := state.New(cfg.Name, store, authPlugin)
 	go st.Pulling()
 
 	s := make(chan state.State, 1)

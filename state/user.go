@@ -9,7 +9,9 @@ import (
 type User struct {
 	name     string
 	channels map[*Channel]bool
-	send     func(*storage.Message)
+	roles    []string
+
+	send func(*storage.Message)
 }
 
 func (u *User) String() string {
