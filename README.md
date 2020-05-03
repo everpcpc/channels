@@ -1,9 +1,10 @@
 # mcdc
 
-A Message Collection and Distribution Center
+mcdc is a message gateway, which stands for `Message Collection and Distribution Center`.
 
-with a stateless irc protocol subset server and api endpoints.
+With a stateless irc protocol subset server and streaming web api endpoints.
 
+And backend message queue based on redis pubsub.
 
 ## TODO
 
