@@ -15,7 +15,7 @@ import (
 func RunServer(cfg Config) {
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
-		logf(fatal, "Could not create server: %v", err)
+		logrus.Fatalf("Could not create server: %v", err)
 	}
 
 	var lnSSL net.Listener
@@ -27,7 +27,7 @@ func RunServer(cfg Config) {
 			if err == nil {
 				return &cert, nil
 			} else {
-				logf(warn, "Could not create TLS server: %v", err)
+				logrus.Warnf("Could not create TLS server: %v", err)
 				return nil, err
 			}
 		}
@@ -36,7 +36,7 @@ func RunServer(cfg Config) {
 
 		lnSSL, err = tls.Listen("tcp", fmt.Sprintf(":%d", cfg.SSLPort), sslCfg)
 		if err != nil {
-			logf(fatal, "Could not create TLS server: %v", err)
+			logrus.Fatalf("Could not create TLS server: %v", err)
 		}
 	}
 
@@ -63,7 +63,7 @@ func acceptLoop(cfg Config, listener net.Listener, s chan state.State) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			logf(warn, "Could not accept new connection: ", err)
+			logrus.Warnf("Could not accept new connection: ", err)
 			continue
 		}
 

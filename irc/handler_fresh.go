@@ -93,7 +93,7 @@ func (h *freshUserHandler) handleUser(conn connection, msg message) handler {
 
 	logrus.Debugf("handleUser: %+v", msg)
 
-	sendMOTD(s, h.user, conn.send)
+	sendIntro(s, h.user, conn.send)
 
 	return newUserHandler(h.state, h.user.GetName())
 }

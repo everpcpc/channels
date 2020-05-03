@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v7"
-	"github.com/prometheus/common/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,11 +39,11 @@ func (b *BackendRedis) Save(msg Message) (err error) {
 }
 
 func (b *BackendRedis) PullLoop(dst chan Message) {
-	b.sub = b.client.Subscribe()
+	// default subscribe to #announce
+	b.sub = b.client.Subscribe("#announce")
 	defer b.sub.Close()
 	var err error
 	var msgi interface{}
-	var msg Message
 
 	for {
 		msgi, err = b.sub.Receive()
@@ -56,22 +55,28 @@ func (b *BackendRedis) PullLoop(dst chan Message) {
 
 		switch mi := msgi.(type) {
 		case *redis.Subscription:
-			logrus.Infof("subscribe succeeded to %s", mi.Channel)
+			logrus.Infof("%s succeeded to %s", mi.Kind, mi.Channel)
 		case *redis.Message:
+			var msg Message
 			err = json.Unmarshal([]byte(mi.Payload), &msg)
 			if err != nil {
 				logrus.Errorf("msg error: %v", err)
 				continue
 			}
-			log.Debugf("recv msg: %v", msg)
+			logrus.Debugf("recv msg: %v", msg)
+			dst <- msg
 		case *redis.Pong:
 			// pong received
 		default:
-			// handle error
+			logrus.Warnf("recv unknown msg: %v", mi)
 		}
 	}
 }
 
 func (b *BackendRedis) Subscribe(channel string) error {
 	return b.sub.Subscribe(channel)
+}
+
+func (b *BackendRedis) UnSubscribe(channel string) error {
+	return b.sub.Unsubscribe(channel)
 }

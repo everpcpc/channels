@@ -20,21 +20,3 @@ type SSLCertificate struct {
 	KeyFile  string
 	CertFile string
 }
-
-// // setConfigDefaults fills in the default values of the Config if no value is
-// // specified for a field.
-// func setConfigDefaults(cfg Config) Config {
-// 	if cfg.PingFrequency == 0 {
-// 		cfg.PingFrequency = 30
-// 	}
-
-// 	if cfg.PongMaxLatency == 0 {
-// 		cfg.PongMaxLatency = 5
-// 	}
-
-// 	if cfg.SSLPort == 0 {
-// 		cfg.SSLPort = 6697
-// 	}
-
-// 	return cfg
-// }

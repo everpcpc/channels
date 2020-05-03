@@ -88,7 +88,7 @@ func (s *stateImpl) NewUser(name string) *User {
 		return nil
 	}
 
-	logrus.Debugf("Adding new user %s", name)
+	logrus.Infof("Adding new user %s", name)
 
 	u := &User{
 		name:     name,
@@ -99,7 +99,7 @@ func (s *stateImpl) NewUser(name string) *User {
 }
 
 func (s *stateImpl) RemoveUser(user *User) {
-	logrus.Debugf("Removing user %s", user.name)
+	logrus.Infof("Removing user %s", user.name)
 
 	user.forChannels(func(ch *Channel) {
 		s.PartChannel(ch, user, "QUITing")
@@ -119,15 +119,16 @@ func (s *stateImpl) NewChannel(name string) *Channel {
 		return nil
 	}
 
+	if err := s.backend.Subscribe(name); err != nil {
+		logrus.Errorf("subscribe error for %s: %v", name, err)
+		return nil
+	}
+
 	ch := &Channel{
 		name:  name,
 		users: make(map[*User]bool),
 	}
-	if err := s.backend.Subscribe(name); err != nil {
-		logrus.Errorf("new channel failed to subscribe: %v", err)
-	} else {
-		s.channels[name] = ch
-	}
+	s.channels[name] = ch
 	logrus.Debugf("new channel: %s", ch)
 
 	return ch
@@ -138,6 +139,12 @@ func (s *stateImpl) RecycleChannel(channel *Channel) {
 		return
 	}
 	logrus.Debugf("Recycling channel %+v", channel)
+	err := s.backend.UnSubscribe(channel.name)
+	if err != nil {
+		logrus.Errorf("subscribe error for %s: %v", channel.name, err)
+		return
+	}
+
 	delete(s.channels, channel.name)
 }
 
@@ -172,17 +179,15 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 }
 
 func (s *stateImpl) Pulling() {
-	var ch chan storage.Message
+	ch := make(chan storage.Message)
 	go s.backend.PullLoop(ch)
-	var channel *Channel
 
 	for msg := range ch {
-		channel = s.GetChannel(msg.Channel)
+		channel := s.GetChannel(msg.Channel)
 		if channel == nil {
 			continue
 		}
+		logrus.Debugf("sending channel %s msg: %v", channel, msg)
 		channel.Send(&msg)
-		channel = nil
 	}
-
 }

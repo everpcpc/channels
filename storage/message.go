@@ -1,8 +1,7 @@
 package storage
 
 type Message struct {
-	From      string
-	Channel   string
-	Text      string
-	Timestamp int64
+	From    string `json:"from,omitempty"`
+	Channel string `json:"channel,omitempty"`
+	Text    string `json:"text,omitempty"`
 }

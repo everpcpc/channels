@@ -15,6 +15,10 @@ func (ch *Channel) String() string {
 	return fmt.Sprintf("<Channel:%s>", ch.name)
 }
 
+func (ch *Channel) GetName() string {
+	return ch.name
+}
+
 func (ch *Channel) Send(msg *storage.Message) {
 	for user := range ch.users {
 		user.send(msg)

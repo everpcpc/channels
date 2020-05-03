@@ -3,6 +3,8 @@ package irc
 import (
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"mcdc/state"
 )
 
@@ -22,15 +24,16 @@ func newUserHandler(s chan state.State, nick string) handler {
 		nick:  nick,
 	}
 	handler.commands = commandMap{
-		cmdJoin.command: handler.handleCmdJoin,
-		cmdPart.command: handler.handleCmdPart,
-		cmdPing.command: handler.handleCmdPing,
-		cmdQuit.command: handler.handleCmdQuit,
+		cmdJoin.command:  handler.handleCmdJoin,
+		cmdNames.command: handler.handleCmdNames,
+		cmdPart.command:  handler.handleCmdPart,
+		cmdPing.command:  handler.handleCmdPing,
+		cmdQuit.command:  handler.handleCmdQuit,
 
 		cmdWho.command:     handler.handleCmdDummy,
 		cmdPong.command:    handler.handleCmdDummy,
 		cmdAway.command:    handler.handleCmdDummy,
-		cmdNames.command:   handler.handleCmdDummy,
+		cmdMode.command:    handler.handleCmdDummy,
 		cmdPrivMsg.command: handler.handleCmdDummy,
 	}
 	return handler
@@ -50,7 +53,7 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 
 	command := h.commands[msg.command]
 	if command == nil {
-		logf(warn, "unknown command from %s: %s\n", h.nick, msg.command)
+		logrus.Warnf("unknown command from %s: %s\n", h.nick, msg.command)
 		return h
 	}
 
@@ -91,8 +94,28 @@ func (h *userHandler) handleCmdJoin(s state.State, user *state.User, conn connec
 		}
 
 		s.JoinChannel(channel, user)
+
+		conn.send(cmdJoin.withPrefix(user.GetName()).withParams(channel.GetName()))
+		// sendNumericUser(s, user, conn.send, replyNoTopic.withTrailing("no topic"), channel.GetName())
+		sendNames(s, user, conn.send, channel)
 	}
 
+	return h
+}
+
+func (h *userHandler) handleCmdNames(s state.State, user *state.User, conn connection, msg message) handler {
+	if len(msg.params) == 0 {
+		sendNames(s, user, conn.send, user.GetChannels()...)
+		return h
+	}
+	names := strings.Split(msg.params[0], ",")
+	for _, name := range names {
+		channel := s.GetChannel(name)
+		if channel == nil {
+			continue
+		}
+		sendNames(s, user, conn.send, channel)
+	}
 	return h
 }
 
@@ -118,6 +141,7 @@ func (h *userHandler) handleCmdPart(s state.State, user *state.User, conn connec
 			continue
 		}
 
+		conn.send(cmdPart.withPrefix(user.GetName()).withParams(channel.GetName()).withTrailing(reason))
 		s.PartChannel(channel, user, reason)
 	}
 	return h

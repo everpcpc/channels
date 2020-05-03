@@ -20,6 +20,14 @@ func (u *User) GetName() string {
 	return u.name
 }
 
+func (u *User) GetChannels() []*Channel {
+	channels := make([]*Channel, len(u.channels))
+	for ch := range u.channels {
+		channels = append(channels, ch)
+	}
+	return channels
+}
+
 func (u *User) SetSendFn(fn func(*storage.Message)) {
 	u.send = fn
 }

@@ -78,7 +78,7 @@ func (c *connectionImpl) readLoop() {
 		case <-c.killRead:
 			alive = false
 		case msg = <-c.inject:
-			logf(debug, "< (injected) %+v", msg)
+			logrus.Debugf("inject: %+v", msg)
 			didQuit = didQuit || msg.command == cmdQuit.command
 			c.handler = c.handler.handle(c, msg)
 		default:
@@ -88,12 +88,13 @@ func (c *connectionImpl) readLoop() {
 				continue
 			}
 
+			logrus.Debugf("recv: %+v", msg)
+
 			// Notify the ping thread that we got a ping.
 			if msg.command == cmdPong.command {
 				c.gotPong <- struct{}{}
 			}
 
-			logrus.Debugf("recv: %+v", msg)
 			didQuit = didQuit || msg.command == cmdQuit.command
 			c.handler = c.handler.handle(c, msg)
 		}

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -30,10 +29,7 @@ func main() {
 		ircCmd.IntVar(&config.PongMaxLatency, "timeout", 5, "client pong response timeout in seconds")
 		ircCmd.Parse(os.Args[2:])
 
-		log.SetFlags(log.Ldate | log.Ltime)
-		irc.SetLogLevel(4)
-
-		logrus.SetLevel(logrus.DebugLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 
 		irc.RunServer(config)
 
