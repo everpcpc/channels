@@ -23,5 +23,5 @@ type Plugin interface {
 	//
 	// The returned Caller is user-defined. The most important field is Roles
 	// which will be matched against request ACL roles from the specs.
-	Authenticate(user, pass string) (Caller, error)
+	Authenticate(user, pass string) (*Caller, error)
 }

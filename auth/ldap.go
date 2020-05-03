@@ -4,6 +4,6 @@ package auth
 type LDAPAuth struct{}
 
 // Authenticate returns the Caller and auth result
-func (l LDAPAuth) Authenticate(user, pass string) (Caller, error) {
-	return Caller{}, nil
+func (l LDAPAuth) Authenticate(user, pass string) (*Caller, error) {
+	return &Caller{Name: user}, nil
 }

@@ -2,14 +2,13 @@ package irc
 
 import (
 	"mcdc/state"
-
-	"github.com/sirupsen/logrus"
 )
 
 // freshHandler is a handler for a brand new connection that has not been
 // registered yet.
 type freshHandler struct {
 	state chan state.State
+	pass  string
 }
 
 func newFreshHandler(s chan state.State) handler {
@@ -21,11 +20,14 @@ func (h *freshHandler) handle(conn connection, msg message) handler {
 		conn.kill()
 		return nullHandler{}
 	}
-	if msg.command != cmdNick.command {
-		logrus.Infof("early command: %+v", msg)
+	switch msg.command {
+	case cmdNick.command:
+		return h.handleNick(conn, msg)
+	case cmdPass.command:
+		return h.handlePass(conn, msg)
+	default:
 		return h
 	}
-	return h.handlePass(conn, msg)
 }
 
 func (_ *freshHandler) closed(c connection) {
@@ -36,13 +38,36 @@ func (h *freshHandler) handlePass(conn connection, msg message) handler {
 	s := <-h.state
 	defer func() { h.state <- s }()
 
-	logrus.Infof("command PASS: %+v", msg)
+	if len(msg.params) < 1 {
+		sendNumeric(s, conn.send, errorNeedMoreParams)
+	} else {
+		h.pass = msg.params[0]
+	}
+	return h
+}
+
+func (h *freshHandler) handleNick(conn connection, msg message) handler {
+	s := <-h.state
+	defer func() { h.state <- s }()
 
 	if len(msg.params) < 1 {
 		sendNumeric(s, conn.send, errorNoNicknameGiven)
 		return h
 	}
 	nick := msg.params[0]
+	if h.pass == "" {
+		sendNumeric(s, conn.send, errorPasswdMismatch)
+		return h
+	}
+	caller, err := s.Auth(nick, h.pass)
+	if err != nil {
+		sendNumeric(s, conn.send, errorPasswdMismatch)
+		return h
+	}
+	if caller.Name != nick {
+		sendNumeric(s, conn.send, errorNickCollision)
+		return h
+	}
 
 	user := s.NewUser(nick)
 	if user == nil {
@@ -50,6 +75,7 @@ func (h *freshHandler) handlePass(conn connection, msg message) handler {
 		return h
 	}
 
+	user.AddRoles(caller.Roles...)
 	user.SetSendFn(messageSink(conn))
 
 	return &freshUserHandler{state: h.state, user: user}

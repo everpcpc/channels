@@ -22,6 +22,10 @@ func (u *User) GetName() string {
 	return u.name
 }
 
+func (u *User) AddRoles(roles ...string) {
+	u.roles = append(u.roles, roles...)
+}
+
 func (u *User) GetChannels() []*Channel {
 	channels := make([]*Channel, len(u.channels))
 	for ch := range u.channels {

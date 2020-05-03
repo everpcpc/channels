@@ -14,6 +14,9 @@ type State interface {
 	// GetName get the server name
 	GetName() string
 
+	// Auth to server with username and password
+	Auth(string, string) (*auth.Caller, error)
+
 	// GetChannel returns a pointer to the channel struct corresponding to the
 	// given channel name.
 	GetChannel(string) *Channel
@@ -75,6 +78,10 @@ func New(name string, store storage.Backend, authPlugin auth.Plugin) State {
 
 func (s *stateImpl) GetName() string {
 	return s.name
+}
+
+func (s *stateImpl) Auth(user, pass string) (*auth.Caller, error) {
+	return s.authPlugin.Authenticate(user, pass)
 }
 
 func (s *stateImpl) GetChannel(name string) *Channel {
