@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"strings"
 
 	"mcdc/storage"
 )
@@ -15,7 +16,7 @@ type User struct {
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf("<User:%s>", u.name)
+	return fmt.Sprintf("<User:%s@%s>", u.name, strings.Join(u.roles, ","))
 }
 
 func (u *User) GetName() string {

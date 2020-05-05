@@ -63,7 +63,21 @@ func (l *LDAPAuth) Authenticate(user, pass string) (c *Caller, err error) {
 				err = errors.New("username mismatch")
 			}
 		case l.AttrMemberOf:
-			userGroups = attr.Values
+			var g *ldap.DN
+			for _, dn := range attr.Values {
+				g, err = ldap.ParseDN(dn)
+				if err != nil {
+					err = fmt.Errorf("get user group error: %v", err)
+					return
+				}
+				for _, attrs := range g.RDNs {
+					for _, attr := range attrs.Attributes {
+						if attr.Type == "cn" {
+							userGroups = append(userGroups, attr.Value)
+						}
+					}
+				}
+			}
 		default:
 		}
 	}
