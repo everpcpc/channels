@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mcdc/state"
-	"mcdc/storage"
+	"channels/state"
+	"channels/storage"
 )
 
 type env struct {

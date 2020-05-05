@@ -2,7 +2,8 @@ package state
 
 import (
 	"fmt"
-	"mcdc/storage"
+
+	"channels/storage"
 )
 
 type Channel struct {

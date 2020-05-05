@@ -1,4 +1,4 @@
-module mcdc
+module channels
 
 go 1.13
 

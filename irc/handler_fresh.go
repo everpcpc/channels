@@ -1,9 +1,9 @@
 package irc
 
 import (
-	"mcdc/state"
-
 	"github.com/sirupsen/logrus"
+
+	"channels/state"
 )
 
 // freshHandler is a handler for a brand new connection that has not been

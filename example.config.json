@@ -1,7 +1,6 @@
 {
     "irc": {
         "name": "ircd",
-        "network": "My IRC Network",
         "port": 6667,
         "sslPort": 6697,
         "pingFrequency": 30,

@@ -4,7 +4,6 @@ package irc
 // local irc server.
 type Config struct {
 	Name    string
-	Network string
 	Port    int
 	SSLPort int
 

@@ -1,6 +1,6 @@
-# mcdc
+# channels
 
-mcdc is a message gateway, which stands for `Message Collection and Distribution Center`.
+channels is a message gateway by channel.
 
 With a stateless irc protocol subset server and streaming web api endpoints.
 

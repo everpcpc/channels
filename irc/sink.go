@@ -3,7 +3,7 @@ package irc
 import (
 	"fmt"
 
-	"mcdc/storage"
+	"channels/storage"
 )
 
 type sink func(message)

@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"mcdc/storage"
+	"channels/storage"
 )
 
 func (e *env) postMessage(c *gin.Context) {

@@ -3,8 +3,8 @@ package state
 import (
 	"github.com/sirupsen/logrus"
 
-	"mcdc/auth"
-	"mcdc/storage"
+	"channels/auth"
+	"channels/storage"
 )
 
 // State represents the state of this server.

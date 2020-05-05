@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"mcdc/storage"
+	"channels/storage"
 )
 
 type User struct {

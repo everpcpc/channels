@@ -3,7 +3,7 @@ package irc
 import (
 	"fmt"
 
-	"mcdc/state"
+	"channels/state"
 )
 
 // sendNumeric sends a numeric response to the given sink.
@@ -28,7 +28,7 @@ func sendIntro(s state.State, user *state.User, sink sink) {
 				user.GetName())))
 	sendNumericUser(s, user, sink,
 		replyYourHost.withTrailing(
-			fmt.Sprintf("Your host is %s, running with mcdc with a subset of irc protocol", s.GetName())))
+			fmt.Sprintf("Your host is %s, running with channels with a subset of irc protocol", s.GetName())))
 }
 
 // sendNames sends the messages associated with a NAMES request.

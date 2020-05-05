@@ -7,9 +7,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"mcdc/auth"
-	"mcdc/state"
-	"mcdc/storage"
+	"channels/auth"
+	"channels/state"
+	"channels/storage"
 )
 
 // RunServer starts the IRC server. This method will not return.

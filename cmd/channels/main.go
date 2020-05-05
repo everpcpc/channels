@@ -8,10 +8,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"mcdc/api"
-	"mcdc/auth"
-	"mcdc/irc"
-	"mcdc/storage"
+	"channels/api"
+	"channels/auth"
+	"channels/irc"
+	"channels/storage"
 )
 
 type config struct {

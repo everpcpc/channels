@@ -3,9 +3,9 @@ package irc
 import (
 	"strings"
 
-	"mcdc/state"
-
 	"github.com/sirupsen/logrus"
+
+	"channels/state"
 )
 
 type commandMap map[string]func(state.State, *state.User, connection, message) handler
