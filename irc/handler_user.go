@@ -56,8 +56,9 @@ func (h *userHandler) handle(conn connection, msg message) handler {
 		return h
 	}
 
+	logrus.Debugf("command: %+v", msg)
+
 	user := s.GetUser(h.nick)
-	logrus.Infof("command: %+v", msg)
 
 	newHandler := command(s, user, conn, msg)
 	h.nick = user.GetName()

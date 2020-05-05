@@ -59,6 +59,7 @@ func (h *freshHandler) handleNick(conn connection, msg message) handler {
 		sendNumeric(s, conn.send, errorPasswdMismatch)
 		return h
 	}
+
 	caller, err := s.Auth(nick, h.pass)
 	if err != nil {
 		sendNumeric(s, conn.send, errorPasswdMismatch)
