@@ -4,6 +4,6 @@ package auth
 type Anonymous struct{}
 
 // Authenticate returns a zero value Caller and nil (allow).
-func (a Anonymous) Authenticate(user, pass string) (*Caller, error) {
+func (a *Anonymous) Authenticate(user, pass string) (*Caller, error) {
 	return &Caller{Name: user}, nil
 }

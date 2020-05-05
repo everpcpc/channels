@@ -20,6 +20,7 @@
         "attrMemberOf": "memberOf"
     },
     "auth.irc": "ldap",
+    "auth.webhook": "token",
     "storage": "redis",
     "redis": {
         "network": "tcp",

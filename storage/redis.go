@@ -90,3 +90,34 @@ func (b *BackendRedis) Subscribe(channel string) error {
 func (b *BackendRedis) UnSubscribe(channel string) error {
 	return b.sub.Unsubscribe(channel)
 }
+
+func (b *BackendRedis) GetToken(token string) (data *TokenData, err error) {
+	var res string
+	res, err = b.client.Get("token:" + token).Result()
+	if err != nil {
+		return
+	}
+	data = new(TokenData)
+	err = json.Unmarshal([]byte(res), data)
+	return
+}
+
+func (b *BackendRedis) AddToken(token string, data *TokenData) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	pipe := b.client.Pipeline()
+	pipe.SAdd("tokens", token)
+	pipe.Set("token:"+token, jsonData, 0)
+	_, err = pipe.Exec()
+	return err
+}
+
+func (b *BackendRedis) DeleteToken(token string) error {
+	pipe := b.client.Pipeline()
+	pipe.SRem("tokens", token)
+	pipe.Del("token:" + token)
+	_, err := pipe.Exec()
+	return err
+}

@@ -5,19 +5,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"channels/auth"
 	"channels/state"
 	"channels/storage"
 )
 
 type env struct {
-	state state.State
-	store storage.Backend
+	state       state.State
+	store       storage.Backend
+	authPlugin  auth.Plugin
+	webhookAuth auth.Plugin
 }
 
-func RunServer(port int, store storage.Backend) {
+func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store storage.Backend) {
 	r := gin.Default()
 
-	e := &env{store: store}
+	e := &env{
+		store:       store,
+		webhookAuth: webhookAuth,
+	}
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -27,7 +33,7 @@ func RunServer(port int, store storage.Backend) {
 
 	api := r.Group("/api")
 	{
-		api.POST("/message", e.postMessage)
+		api.POST("/message/:token", e.postMessage)
 	}
 
 	r.Run(fmt.Sprintf(":%d", port))

@@ -15,12 +15,13 @@ import (
 )
 
 type config struct {
-	IRC     *irc.Config
-	AuthIRC string `json:"auth.irc"`
-	LDAP    *auth.LDAPAuth
-	APIPort int `json:"api.port"`
-	Storage string
-	Redis   *storage.RedisConfig
+	IRC         *irc.Config
+	AuthIRC     string `json:"auth.irc"`
+	AuthWebhook string `json:"auth.webhook"`
+	LDAP        *auth.LDAPAuth
+	APIPort     int `json:"api.port"`
+	Storage     string
+	Redis       *storage.RedisConfig
 }
 
 func readConfig(f string) *config {
@@ -60,11 +61,16 @@ func main() {
 	cfg := readConfig(*flagConfig)
 
 	var store storage.Backend
+	var tokenStore storage.TokenBackend
 	var err error
 
 	switch cfg.Storage {
 	case "redis":
 		store, err = storage.NewRedisBackend(cfg.Redis)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		tokenStore, err = storage.NewRedisBackend(cfg.Redis)
 		if err != nil {
 			logrus.Fatal(err)
 		}
@@ -77,10 +83,16 @@ func main() {
 		if cfg.AuthIRC == "ldap" {
 			irc.RunServer(cfg.IRC, cfg.LDAP, store)
 		} else {
-			irc.RunServer(cfg.IRC, auth.Anonymous{}, store)
+			irc.RunServer(cfg.IRC, &auth.Anonymous{}, store)
 		}
 	case "api":
-		api.RunServer(cfg.APIPort, store)
+		var webhookAuth auth.Plugin
+		if cfg.AuthWebhook == "token" {
+			webhookAuth = &auth.TokenAuth{Store: tokenStore}
+		} else {
+			webhookAuth = &auth.Anonymous{}
+		}
+		api.RunServer(cfg.APIPort, &auth.Anonymous{}, webhookAuth, store)
 	default:
 		flag.PrintDefaults()
 	}
