@@ -12,10 +12,9 @@ func messageSink(conn connection) func(msg *storage.Message) {
 	return func(msg *storage.Message) {
 		msgToSend := cmdPrivMsg.
 			withPrefix(fmt.Sprintf("%s!%s", msg.From, msg.From)).
-			withParams(msg.Channel).
+			withParams(msg.GetTarget()).
 			withTrailing(msg.Text)
 
 		conn.send(msgToSend)
-
 	}
 }

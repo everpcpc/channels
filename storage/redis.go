@@ -44,7 +44,7 @@ func (b *BackendRedis) Save(msg Message) (err error) {
 	if err != nil {
 		return
 	}
-	_, err = b.client.Publish(msg.Channel, s).Result()
+	_, err = b.client.Publish(msg.To, s).Result()
 	return
 }
 

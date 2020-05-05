@@ -20,7 +20,7 @@ func (ch *Channel) GetName() string {
 	return ch.name
 }
 
-func (ch *Channel) Send(msg *storage.Message) {
+func (ch *Channel) send(msg *storage.Message) {
 	for user := range ch.users {
 		user.send(msg)
 	}

@@ -1,6 +1,8 @@
 package state
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 
 	"channels/auth"
@@ -98,18 +100,29 @@ func (s *stateImpl) NewUser(name string) *User {
 		return nil
 	}
 
-	logrus.Infof("Adding new user %s", name)
+	if err := s.store.Subscribe("@" + name); err != nil {
+		logrus.Errorf("subscribe error for %s: %v", name, err)
+		return nil
+	}
 
 	u := &User{
 		name:     name,
 		channels: make(map[*Channel]bool),
 	}
 	s.users[nameLower] = u
+	logrus.Debugf("new user %s", name)
+
 	return u
 }
 
 func (s *stateImpl) RemoveUser(user *User) {
-	logrus.Infof("Removing user %s", user.name)
+	logrus.Debugf("Removing user %s", user.name)
+
+	err := s.store.UnSubscribe("@" + user.name)
+	if err != nil {
+		logrus.Errorf("unsubscribe error for %v: %v", user, err)
+		return
+	}
 
 	user.forChannels(func(ch *Channel) {
 		s.PartChannel(ch, user, "QUITing")
@@ -125,7 +138,7 @@ func (s *stateImpl) NewChannel(name string) *Channel {
 		return nil
 	}
 
-	if name[0] != '#' && name[0] != '&' {
+	if name[0] != '#' {
 		return nil
 	}
 
@@ -151,7 +164,7 @@ func (s *stateImpl) RecycleChannel(channel *Channel) {
 	logrus.Debugf("Recycling channel %+v", channel)
 	err := s.store.UnSubscribe(channel.name)
 	if err != nil {
-		logrus.Errorf("subscribe error for %s: %v", channel.name, err)
+		logrus.Errorf("unsubscribe error for %v: %v", channel, err)
 		return
 	}
 
@@ -193,11 +206,22 @@ func (s *stateImpl) Pulling() {
 	go s.store.PullLoop(ch)
 
 	for msg := range ch {
-		channel := s.GetChannel(msg.Channel)
-		if channel == nil {
-			continue
+		if msg.IsChannel() {
+			channel := s.GetChannel(msg.To)
+			if channel == nil {
+				continue
+			}
+			logrus.Debugf("sending channel %s msg: %v", channel.GetName(), msg)
+			channel.send(&msg)
+		} else if msg.IsPrivate() {
+			user := s.GetUser(strings.TrimLeft(msg.To, "@"))
+			if user == nil {
+				continue
+			}
+			logrus.Debugf("sending private %s msg: %v", user.GetName(), msg)
+			user.send(&msg)
+		} else {
+			logrus.Warnf("unknown target %s msg: %v", msg.To, msg)
 		}
-		logrus.Debugf("sending channel %s msg: %v", channel, msg)
-		channel.Send(&msg)
 	}
 }
