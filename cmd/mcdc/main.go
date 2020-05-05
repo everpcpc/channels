@@ -1,8 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -10,40 +11,77 @@ import (
 	"mcdc/api"
 	"mcdc/auth"
 	"mcdc/irc"
+	"mcdc/storage"
 )
 
-func main() {
+type config struct {
+	IRC     *irc.Config
+	AuthIRC string `json:"auth.irc"`
+	LDAP    *auth.LDAPAuth
+	APIPort int `json:"api.port"`
+	Storage string
+	Redis   *storage.RedisConfig
+}
 
-	if len(os.Args) < 2 {
-		fmt.Println("expected subcommand: irc, api")
-		os.Exit(1)
+func readConfig(f string) *config {
+	cfgFile, err := os.Open(f)
+	if err != nil {
+		logrus.Fatalf("read config file error: %v", err)
+	}
+	defer cfgFile.Close()
+
+	var cfg config
+	content, _ := ioutil.ReadAll(cfgFile)
+	err = json.Unmarshal([]byte(content), &cfg)
+	if err != nil {
+		logrus.Fatalf("read config error: %v", err)
 	}
 
-	switch os.Args[1] {
-	case "irc":
-		var config irc.Config
-		ircCmd := flag.NewFlagSet("irc", flag.ExitOnError)
-		ircCmd.StringVar(&config.Name, "name", "ircd", "irc server name")
-		ircCmd.StringVar(&config.Network, "network", "My IRC Network", "irc network name")
-		ircCmd.IntVar(&config.Port, "port", 6667, "listen port for irc server")
-		ircCmd.IntVar(&config.PingFrequency, "ping", 30, "ping frequency to client in seconds")
-		ircCmd.IntVar(&config.PongMaxLatency, "timeout", 5, "client pong response timeout in seconds")
-		ircCmd.Parse(os.Args[2:])
-		// TODO: ssl flags
+	return &cfg
+}
 
+func main() {
+	flagConfig := flag.String("config", "config.json", "config file to load")
+	flagLogLevel := flag.String("log", "info", "loglevel: debug, info, warn, error")
+	flagRun := flag.String("run", "", "choose: irc, api")
+	flag.Parse()
+
+	switch *flagLogLevel {
+	case "debug":
+		logrus.SetLevel(logrus.DebugLevel)
+	case "info":
 		logrus.SetLevel(logrus.InfoLevel)
+	case "warn":
+		logrus.SetLevel(logrus.WarnLevel)
+	case "error":
+		logrus.SetLevel(logrus.ErrorLevel)
+	}
 
-		irc.RunServer(config, auth.Anonymous{})
+	cfg := readConfig(*flagConfig)
 
-	case "api":
-		apiCmd := flag.NewFlagSet("api", flag.ExitOnError)
-		apiPort := apiCmd.Int("port", 8080, "listen port for api server")
-		apiCmd.Parse(os.Args[2:])
+	var store storage.Backend
+	var err error
 
-		api.RunServer(*apiPort)
-
+	switch cfg.Storage {
+	case "redis":
+		store, err = storage.NewRedisBackend(cfg.Redis)
+		if err != nil {
+			logrus.Fatal(err)
+		}
 	default:
-		fmt.Println("expected subcommand: irc, api")
-		os.Exit(1)
+		logrus.Fatalf("storage %s not supported", cfg.Storage)
+	}
+
+	switch *flagRun {
+	case "irc":
+		if cfg.AuthIRC == "ldap" {
+			irc.RunServer(cfg.IRC, cfg.LDAP, store)
+		} else {
+			irc.RunServer(cfg.IRC, auth.Anonymous{}, store)
+		}
+	case "api":
+		api.RunServer(cfg.APIPort, store)
+	default:
+		flag.PrintDefaults()
 	}
 }

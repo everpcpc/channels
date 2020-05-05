@@ -1,0 +1,32 @@
+{
+    "irc": {
+        "name": "ircd",
+        "network": "My IRC Network",
+        "port": 6667,
+        "sslPort": 6697,
+        "pingFrequency": 30,
+        "pongMaxlatency": 5,
+        "sslCertificate": {
+            "keyfile": "",
+            "certfile": ""
+        }
+    },
+    "ldap": {
+        "url":"ldap://example.com:389",
+        "bindDN": "cn=test,ou=users,dc=example,dc=com",
+        "bindPass": "password",
+        "searchFilter": "(uid=%s)",
+        "searchBase": "ou=people,dc=example,dc=com",
+        "attrUsername": "uid",
+        "attrMemberOf": "memberOf"
+    },
+    "auth.irc": "ldap",
+    "storage": "redis",
+    "redis": {
+        "network": "tcp",
+        "addr": "localhost:6379",
+        "password": "",
+        "db": 0
+    },
+    "api.port": 8989
+}

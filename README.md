@@ -8,7 +8,7 @@ And backend message queue based on redis pubsub.
 
 ## TODO
 
-- [ ] irc auth with ldap
+- [x] irc auth with ldap
 - [ ] role(ldap group) based channel permission
 - [ ] api auth with openid
 - [ ] github webhook support

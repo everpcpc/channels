@@ -8,9 +8,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewRedisBackend(addr string) (*BackendRedis, error) {
+type RedisConfig struct {
+	Network  string
+	Addr     string
+	Password string
+	DB       int
+}
+
+func NewRedisBackend(cfg *RedisConfig) (*BackendRedis, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr: addr,
+		Network:  cfg.Network,
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
 	})
 
 	if err := client.Ping().Err(); err != nil {

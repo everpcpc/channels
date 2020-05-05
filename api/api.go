@@ -4,23 +4,20 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
+	"mcdc/state"
 	"mcdc/storage"
 )
 
-var (
+type env struct {
+	state state.State
 	store storage.Backend
-)
+}
 
-func RunServer(port int) {
+func RunServer(port int, store storage.Backend) {
 	r := gin.Default()
 
-	var err error
-	store, err = storage.New("redis", "localhost:6379")
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	e := &env{store: store}
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -28,10 +25,9 @@ func RunServer(port int) {
 		})
 	})
 
-	// TODO: auth
 	api := r.Group("/api")
 	{
-		api.POST("/message", postMessage)
+		api.POST("/message", e.postMessage)
 	}
 
 	r.Run(fmt.Sprintf(":%d", port))

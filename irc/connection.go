@@ -21,7 +21,7 @@ type connection interface {
 }
 
 type connectionImpl struct {
-	config    Config
+	config    *Config
 	conn      net.Conn
 	handler   handler
 	inbox     chan message
@@ -34,7 +34,7 @@ type connectionImpl struct {
 
 // newConnection creates a new connection with the given network connection and
 // handler.
-func newConnection(config Config, conn net.Conn, handler handler) connection {
+func newConnection(config *Config, conn net.Conn, handler handler) connection {
 	return &connectionImpl{
 		config:    config,
 		conn:      conn,

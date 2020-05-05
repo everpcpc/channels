@@ -6,7 +6,7 @@ import (
 	"mcdc/storage"
 )
 
-func postMessage(c *gin.Context) {
+func (e *env) postMessage(c *gin.Context) {
 	var msg storage.Message
 	var err error
 	err = c.BindJSON(&msg)
@@ -14,7 +14,7 @@ func postMessage(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	err = store.Save(msg)
+	err = e.store.Save(msg)
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return

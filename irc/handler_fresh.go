@@ -2,6 +2,8 @@ package irc
 
 import (
 	"mcdc/state"
+
+	"github.com/sirupsen/logrus"
 )
 
 // freshHandler is a handler for a brand new connection that has not been
@@ -62,6 +64,7 @@ func (h *freshHandler) handleNick(conn connection, msg message) handler {
 
 	caller, err := s.Auth(nick, h.pass)
 	if err != nil {
+		logrus.Debugf("login failed %s: %v", nick, err)
 		sendNumeric(s, conn.send, errorPasswdMismatch)
 		return h
 	}

@@ -13,11 +13,12 @@ import (
 )
 
 // RunServer starts the IRC server. This method will not return.
-func RunServer(cfg Config, authPlugin auth.Plugin) {
+func RunServer(cfg *Config, authPlugin auth.Plugin, store storage.Backend) {
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		logrus.Fatalf("Could not create server: %v", err)
 	}
+	logrus.Debugf("running irc server with: %+v", cfg)
 
 	var lnSSL net.Listener
 	certFile := cfg.SSLCertificate.CertFile
@@ -41,11 +42,6 @@ func RunServer(cfg Config, authPlugin auth.Plugin) {
 		}
 	}
 
-	store, err := storage.New("redis", "localhost:6379")
-	if err != nil {
-		logrus.Fatalf("init store failed: %v", err)
-	}
-
 	st := state.New(cfg.Name, store, authPlugin)
 	go st.Pulling()
 
@@ -59,7 +55,7 @@ func RunServer(cfg Config, authPlugin auth.Plugin) {
 	acceptLoop(cfg, ln, s)
 }
 
-func acceptLoop(cfg Config, listener net.Listener, s chan state.State) {
+func acceptLoop(cfg *Config, listener net.Listener, s chan state.State) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
