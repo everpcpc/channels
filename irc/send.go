@@ -21,13 +21,14 @@ func sendNumericUser(s state.State, user *state.User, sink sink, msg message, ex
 
 // sendIntro sends all of the welcome messages that clients expect to receive
 // after joining the server.
-// TODO: allow customize
 func sendIntro(s state.State, user *state.User, sink sink) {
-	sendNumericUser(s, user, sink, replyWelcome.withTrailing("welcome"))
-	sendNumericUser(s, user, sink, replyYourHost.withTrailing("your host"))
-
-	sendNumericUser(s, user, sink, replyMOTDStart.withTrailing(fmt.Sprintf("- %s Message of the day - ", s.GetName())))
-	sendNumericUser(s, user, sink, replyMOTDStart.withTrailing("--------------------------"))
+	sendNumericUser(s, user, sink,
+		replyWelcome.withTrailing(
+			fmt.Sprintf("Welcome to the Message Collection and Distribution Center %s",
+				user.GetName())))
+	sendNumericUser(s, user, sink,
+		replyYourHost.withTrailing(
+			fmt.Sprintf("Your host is %s, running with mcdc with a subset of irc protocol", s.GetName())))
 }
 
 // sendNames sends the messages associated with a NAMES request.

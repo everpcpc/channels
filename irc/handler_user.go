@@ -29,12 +29,6 @@ func newUserHandler(s chan state.State, nick string) handler {
 		cmdPart.command:  handler.handleCmdPart,
 		cmdPing.command:  handler.handleCmdPing,
 		cmdQuit.command:  handler.handleCmdQuit,
-
-		cmdWho.command:     handler.handleCmdDummy,
-		cmdPong.command:    handler.handleCmdDummy,
-		cmdAway.command:    handler.handleCmdDummy,
-		cmdMode.command:    handler.handleCmdDummy,
-		cmdPrivMsg.command: handler.handleCmdDummy,
 	}
 	return handler
 }
