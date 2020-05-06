@@ -91,9 +91,13 @@ func (b *BackendRedis) UnSubscribe(channel string) error {
 	return b.sub.Unsubscribe(channel)
 }
 
+func (b *BackendRedis) tokenKey(token string) string {
+	return "token:" + token
+}
+
 func (b *BackendRedis) GetToken(token string) (data *TokenData, err error) {
 	var res string
-	res, err = b.client.Get("token:" + token).Result()
+	res, err = b.client.Get(b.tokenKey(token)).Result()
 	if err != nil {
 		return
 	}
@@ -109,15 +113,45 @@ func (b *BackendRedis) AddToken(token string, data *TokenData) error {
 	}
 	pipe := b.client.Pipeline()
 	pipe.SAdd("tokens", token)
-	pipe.Set("token:"+token, jsonData, 0)
+	pipe.Set(b.tokenKey(token), jsonData, 0)
 	_, err = pipe.Exec()
 	return err
 }
 
-func (b *BackendRedis) DeleteToken(token string) error {
+func (b *BackendRedis) DeleteTokens(tokens ...string) error {
 	pipe := b.client.Pipeline()
-	pipe.SRem("tokens", token)
-	pipe.Del("token:" + token)
+	pipe.SRem("tokens", tokens)
+	for _, token := range tokens {
+		pipe.Del(b.tokenKey(token))
+	}
 	_, err := pipe.Exec()
 	return err
+}
+
+func (b *BackendRedis) ListTokens() (tokens map[string]*TokenData, err error) {
+	var tokenList []string
+	tokenList, err = b.client.SMembers("tokens").Result()
+	if err != nil {
+		return
+	}
+
+	tokens = make(map[string]*TokenData)
+
+	var ret string
+	for _, token := range tokenList {
+		var data TokenData
+		var e error
+		ret, e = b.client.Get(b.tokenKey(token)).Result()
+		if e != nil {
+			logrus.Warnf("error getting token %s: %v", token, err)
+			continue
+		}
+		e = json.Unmarshal([]byte(ret), &data)
+		if e != nil {
+			logrus.Warnf("error parsing token %s: %v", token, err)
+			continue
+		}
+		tokens[token] = &data
+	}
+	return
 }

@@ -48,8 +48,8 @@ func main() {
 			}
 		},
 	}
-	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "config.json", "config file to load")
-	rootCmd.Flags().StringVarP(&flagLoglevel, "log", "l", "info", "loglevel: debug, info, warn, error")
+	rootCmd.PersistentFlags().StringVarP(&flagConfig, "config", "c", "config.json", "config file to load")
+	rootCmd.PersistentFlags().StringVarP(&flagLoglevel, "log", "l", "info", "loglevel: debug, info, warn, error")
 
 	var cmdIRC = &cobra.Command{
 		Use:   "irc",
@@ -77,6 +77,8 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(cmdIRC, cmdAPI)
+	var cmdToken = getTokenCommand(&tokenStore)
+
+	rootCmd.AddCommand(cmdIRC, cmdAPI, cmdToken)
 	rootCmd.Execute()
 }
