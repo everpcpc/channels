@@ -4,21 +4,34 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/everpcpc/channels)](https://goreportcard.com/report/github.com/everpcpc/channels)
 
 
-channels is a message gateway by channel.
+channels is a message hub/gateway by channel.
 
 With a stateless irc protocol subset server and streaming web api endpoints.
 
 And backend message queue based on redis pubsub.
 
-## TODO
+### RUN
+
+```shell
+docker run --rm --net=host \
+    -v /path/to/config.json:/app/config.json:ro \
+    -it everpcpc/channels --help
+```
+
+### DONE
 
 - [x] irc auth with ldap
 - [x] api auth with tokens
+
+### TODO
+
 - [ ] api auth with openid
 - [ ] role based channel permission
 - [ ] github webhook support
 - [ ] sentry webhook support
-- [ ] forwarder component to work as a message relay
+- [ ] alertmanager webhook support
+- [ ] forwarder component for working as a message relay
 - [ ] sse/websocket api endpoint
 - [ ] web ui
 - [ ] mysql backend for persistent store
+- [ ] kafka backend for group consuming
