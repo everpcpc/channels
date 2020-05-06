@@ -1,0 +1,86 @@
+# Default values for channels.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: everpcpc/channels
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+api:
+  replicaCount: 2
+  port: 80
+  service:
+    type: ClusterIP
+    port: 80
+    annotations: {}
+  resources: {}
+
+irc:
+  replicaCount: 2
+  port: 6667
+  service:
+    type: ClusterIP
+    port: 6667
+    annotations: {}
+  resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+volumeMounts:
+  - name: channels-config
+    mountPath: /app/config.json
+    subPath: config.json
+    readOnly: true
+
+volumes:
+  - name: channels-config
+    secret:
+      secretName: channels-config
+      items:
+        - key: config.json
+          path: config.json
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

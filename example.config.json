@@ -28,5 +28,5 @@
         "password": "",
         "db": 0
     },
-    "api.port": 8989
+    "api.port": 80
 }
