@@ -202,7 +202,7 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 }
 
 func (s *stateImpl) Pulling() {
-	ch := make(chan storage.Message)
+	ch := make(chan *storage.Message)
 	go s.store.PullLoop(ch)
 
 	for msg := range ch {
@@ -212,14 +212,14 @@ func (s *stateImpl) Pulling() {
 				continue
 			}
 			logrus.Debugf("sending channel %s msg: %v", channel.GetName(), msg)
-			channel.send(&msg)
+			channel.send(msg)
 		} else if msg.IsPrivate() {
 			user := s.GetUser(strings.TrimLeft(msg.To, "@"))
 			if user == nil {
 				continue
 			}
 			logrus.Debugf("sending private %s msg: %v", user.GetName(), msg)
-			user.send(&msg)
+			user.send(msg)
 		} else {
 			logrus.Warnf("unknown target %s msg: %v", msg.To, msg)
 		}

@@ -34,7 +34,22 @@ func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store 
 	api := r.Group("/api")
 	{
 		api.POST("/message/:token", e.postMessage)
+		api.POST("/sentry/:token", e.webhookSentry)
 	}
 
 	r.Run(fmt.Sprintf(":%d", port))
+}
+
+func (e *env) checkToken(c *gin.Context) (*auth.Caller, bool) {
+	token, ok := c.Params.Get("token")
+	if !ok {
+		c.AbortWithStatusJSON(400, gin.H{"error": "token error"})
+		return nil, false
+	}
+	caller, err := e.webhookAuth.Authenticate("token", token)
+	if err != nil {
+		c.AbortWithStatusJSON(403, gin.H{"error": "auth failed"})
+		return nil, false
+	}
+	return caller, true
 }

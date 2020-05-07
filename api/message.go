@@ -7,20 +7,13 @@ import (
 )
 
 func (e *env) postMessage(c *gin.Context) {
-	token, ok := c.Params.Get("token")
+	caller, ok := e.checkToken(c)
 	if !ok {
-		c.AbortWithStatusJSON(400, gin.H{"error": "token error"})
-		return
-	}
-	caller, err := e.webhookAuth.Authenticate("token", token)
-	if err != nil {
-		c.AbortWithStatusJSON(403, gin.H{"error": "auth failed"})
 		return
 	}
 
 	var msg storage.Message
-	err = c.BindJSON(&msg)
-	if err != nil {
+	if err := c.BindJSON(&msg); err != nil {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -29,10 +22,10 @@ func (e *env) postMessage(c *gin.Context) {
 		return
 	}
 
-	err = e.store.Save(msg)
-	if err != nil {
+	if err := e.store.Save(&msg); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(200, gin.H{"status": "success"})
 }

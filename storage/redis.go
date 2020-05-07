@@ -38,7 +38,7 @@ type BackendRedis struct {
 	sub    *redis.PubSub
 }
 
-func (b *BackendRedis) Save(msg Message) (err error) {
+func (b *BackendRedis) Save(msg *Message) (err error) {
 	var s []byte
 	s, err = json.Marshal(msg)
 	if err != nil {
@@ -48,7 +48,7 @@ func (b *BackendRedis) Save(msg Message) (err error) {
 	return
 }
 
-func (b *BackendRedis) PullLoop(dst chan Message) {
+func (b *BackendRedis) PullLoop(dst chan *Message) {
 	// default subscribe to #announce
 	b.sub = b.client.Subscribe("#announce")
 	defer b.sub.Close()
@@ -74,7 +74,7 @@ func (b *BackendRedis) PullLoop(dst chan Message) {
 				continue
 			}
 			logrus.Debugf("recv msg: %v", msg)
-			dst <- msg
+			dst <- &msg
 		case *redis.Pong:
 			// pong received
 		default:

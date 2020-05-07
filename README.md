@@ -22,13 +22,13 @@ docker run --rm --net=host \
 
 - [x] irc auth with ldap
 - [x] api auth with tokens
+- [x] sentry webhook support
 
 ### TODO
 
 - [ ] api auth with openid
 - [ ] role based channel permission
 - [ ] github webhook support
-- [ ] sentry webhook support
 - [ ] alertmanager webhook support
 - [ ] forwarder component for working as a message relay
 - [ ] sse/websocket api endpoint
