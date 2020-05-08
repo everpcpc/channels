@@ -9,8 +9,9 @@ import (
 )
 
 type message struct {
-	Target string
-	Text   string
+	Target   string
+	Text     string
+	Markdown string
 }
 
 func (e *env) postMessage(c *gin.Context) {
@@ -33,6 +34,7 @@ func (e *env) postMessage(c *gin.Context) {
 		From:      caller.Name,
 		To:        msg.Target,
 		Text:      msg.Text,
+		Markdown:  msg.Markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
 	if err := e.store.Save(&m); err != nil {

@@ -41,13 +41,13 @@ func (e *env) webhookSentry(c *gin.Context) {
 		return
 	}
 
-	msgToSend := &storage.Message{
+	m := storage.Message{
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Text:      fmt.Sprintf("[%s] %s (%s)", msg.Project, msg.Message, msg.URL),
 		Timestamp: time.Now().UnixNano(),
 	}
-	if err := e.store.Save(msgToSend); err != nil {
+	if err := e.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}

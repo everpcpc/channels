@@ -48,7 +48,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	msgToSend := &storage.Message{
+	m := storage.Message{
 		From: caller.Name,
 		To:   caller.Caps[0],
 		Text: fmt.Sprintf("[%s:%s] {%v}-{%v}",
@@ -56,7 +56,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		Timestamp: time.Now().UnixNano(),
 	}
 
-	if err := e.store.Save(msgToSend); err != nil {
+	if err := e.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}

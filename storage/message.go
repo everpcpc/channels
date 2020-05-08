@@ -6,6 +6,7 @@ type Message struct {
 	From      string
 	To        string
 	Text      string
+	Markdown  string
 	Timestamp int64
 }
 

@@ -51,7 +51,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	msgToSend := &storage.Message{
+	m := storage.Message{
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Timestamp: time.Now().UnixNano(),
@@ -62,19 +62,19 @@ func (e *env) webhookGitHub(c *gin.Context) {
 
 	case "push":
 		// TODO: show more commits
-		msgToSend.Text = fmt.Sprintf("[%s] %s pushed commit ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s pushed commit ' %s ' ( %s )",
 			msg.Repository.FullName, msg.Sender.Login,
 			msg.HeadCommit.Message, msg.HeadCommit.URL,
 		)
 
 	case "issues":
-		msgToSend.Text = fmt.Sprintf("[%s] %s %s issue #%d ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s issue #%d ' %s ' ( %s )",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.Issue.Number, msg.Issue.Title, msg.Issue.HtmlURL,
 		)
 
 	case "pull_request":
-		msgToSend.Text = fmt.Sprintf("[%s] %s %s pull request #%d ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d ' %s ' ( %s )",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.PullRequest.Number, msg.PullRequest.Title, msg.PullRequest.HtmlURL,
 		)
@@ -84,7 +84,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		return
 	}
 
-	if err := e.store.Save(msgToSend); err != nil {
+	if err := e.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
