@@ -35,6 +35,7 @@ func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store 
 	{
 		api.POST("/message/:token", e.postMessage)
 		api.POST("/sentry/:token", e.webhookSentry)
+		api.POST("/github/:token", e.webhookGitHub)
 	}
 
 	r.Run(fmt.Sprintf(":%d", port))

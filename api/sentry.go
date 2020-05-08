@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -29,21 +30,22 @@ func (e *env) webhookSentry(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if len(caller.Caps) != 1 {
+		c.AbortWithStatusJSON(500, gin.H{"error": "caps invalid"})
+		return
+	}
 
 	var msg sentryMessage
 	if err := c.BindJSON(&msg); err != nil {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if len(caller.Caps) != 1 {
-		c.AbortWithStatusJSON(500, gin.H{"error": "caps invalid"})
-		return
-	}
 
 	msgToSend := &storage.Message{
-		From: caller.Name,
-		To:   caller.Caps[0],
-		Text: fmt.Sprintf("[%s] %s (%s)", msg.Project, msg.Message, msg.URL),
+		From:      caller.Name,
+		To:        caller.Caps[0],
+		Text:      fmt.Sprintf("[%s] %s (%s)", msg.Project, msg.Message, msg.URL),
+		Timestamp: time.Now().UnixNano(),
 	}
 	if err := e.store.Save(msgToSend); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
