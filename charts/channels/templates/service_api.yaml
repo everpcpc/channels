@@ -13,7 +13,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: {{ .Values.irc.service.type }}
+  type: {{ .Values.api.service.type }}
   ports:
     - port: {{ .Values.api.service.port }}
       targetPort: {{ .Values.api.port }}
