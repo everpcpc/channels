@@ -1,7 +1,5 @@
 package auth
 
-import "channels/storage"
-
 // Plugin represents the auth plugin. Every request is authenticated and authorized.
 // The default Plugin (AllowAll) allows everything: all callers, requests, and ops.
 type Plugin interface {
@@ -25,28 +23,31 @@ type Caller struct {
 	// Roles are case-sensitive and not modified in any way.
 	Roles []string
 
-	// Caps are channel names, etc.
+	// Caps are channel names, user names etc.
 	// Caps are used by webhook api for auth scope
 	// Caps are case-sensitive and not modified in any way.
 	Caps []string
 }
 
-func (c *Caller) IsCapable(msg *storage.Message) bool {
-	if msg.From != c.Name {
+func (c *Caller) IsCapable(target string) bool {
+	if target == "" {
 		return false
 	}
-	if msg.IsChannel() {
+
+	switch target[0] {
+	case '#':
 		for _, cap := range c.Caps {
-			if cap == msg.To {
+			if cap == "#" || cap == target {
 				return true
 			}
 		}
-	} else if msg.IsPrivate() {
+	case '@':
 		for _, cap := range c.Caps {
-			if cap == "@" {
+			if cap == "@" || cap == target {
 				return true
 			}
 		}
 	}
+
 	return false
 }

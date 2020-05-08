@@ -1,8 +1,6 @@
 package state
 
 import (
-	"strings"
-
 	"github.com/sirupsen/logrus"
 
 	"channels/auth"
@@ -206,22 +204,24 @@ func (s *stateImpl) Pulling() {
 	go s.store.PullLoop(ch)
 
 	for msg := range ch {
-		if msg.IsChannel() {
+		switch msg.To[0] {
+		case '#':
 			channel := s.GetChannel(msg.To)
 			if channel == nil {
 				continue
 			}
 			logrus.Debugf("sending channel %s msg: %v", channel.GetName(), msg)
 			channel.send(msg)
-		} else if msg.IsPrivate() {
-			user := s.GetUser(strings.TrimLeft(msg.To, "@"))
+		case '@':
+			user := s.GetUser(msg.GetTarget())
 			if user == nil {
 				continue
 			}
 			logrus.Debugf("sending private %s msg: %v", user.GetName(), msg)
 			user.send(msg)
-		} else {
+		default:
 			logrus.Warnf("unknown target %s msg: %v", msg.To, msg)
 		}
+
 	}
 }

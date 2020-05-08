@@ -1,10 +1,17 @@
 package api
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"channels/storage"
 )
+
+type message struct {
+	Target string
+	Text   string
+}
 
 func (e *env) postMessage(c *gin.Context) {
 	caller, ok := e.checkToken(c)
@@ -12,17 +19,23 @@ func (e *env) postMessage(c *gin.Context) {
 		return
 	}
 
-	var msg storage.Message
+	var msg message
 	if err := c.BindJSON(&msg); err != nil {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if !caller.IsCapable(&msg) {
+	if !caller.IsCapable(msg.Target) {
 		c.AbortWithStatusJSON(403, gin.H{"error": "scope failed"})
 		return
 	}
 
-	if err := e.store.Save(&msg); err != nil {
+	m := storage.Message{
+		From:      caller.Name,
+		To:        msg.Target,
+		Text:      msg.Text,
+		Timestamp: time.Now().UnixNano(),
+	}
+	if err := e.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
