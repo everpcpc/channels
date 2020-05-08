@@ -24,12 +24,12 @@ docker run --rm --net=host \
 - [x] api auth with tokens
 - [x] sentry webhook support
 - [x] github webhook support
+- [x] alertmanager webhook support
 
 ### TODO
 
 - [ ] api auth with openid
 - [ ] role based channel permission
-- [ ] alertmanager webhook support
 - [ ] forwarder component for working as a message relay
 - [ ] sse/websocket api endpoint
 - [ ] web ui
