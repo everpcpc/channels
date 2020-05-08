@@ -62,19 +62,19 @@ func (e *env) webhookGitHub(c *gin.Context) {
 
 	case "push":
 		// TODO: show more commits
-		m.Text = fmt.Sprintf("[%s] %s pushed commit ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s pushed commit\n{%s}\n(%s)",
 			msg.Repository.FullName, msg.Sender.Login,
 			msg.HeadCommit.Message, msg.HeadCommit.URL,
 		)
 
 	case "issues":
-		m.Text = fmt.Sprintf("[%s] %s %s issue #%d ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n(%s)",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.Issue.Number, msg.Issue.Title, msg.Issue.HtmlURL,
 		)
 
 	case "pull_request":
-		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d ' %s ' ( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n(%s)",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.PullRequest.Number, msg.PullRequest.Title, msg.PullRequest.HtmlURL,
 		)
