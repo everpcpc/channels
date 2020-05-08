@@ -1,6 +1,7 @@
 package irc
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -91,7 +92,9 @@ func (h *userHandler) handleCmdJoin(s state.State, user *state.User, conn connec
 
 		s.JoinChannel(channel, user)
 
-		conn.send(cmdJoin.withPrefix(user.GetName()).withParams(channel.GetName()))
+		conn.send(cmdJoin.withPrefix(fmt.Sprintf(
+			"%s!%s@%s", user.GetName(), user.GetName(), s.GetName(),
+		)).withParams(channel.GetName()))
 		// sendNumericUser(s, user, conn.send, replyNoTopic.withTrailing("no topic"), channel.GetName())
 		sendNames(s, user, conn.send, channel)
 	}
