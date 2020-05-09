@@ -70,12 +70,12 @@ func Run(cfg *Config, store storage.Backend) {
 			} else {
 				content = slack.MsgOptionText(msg.Text, false)
 			}
-			if _, _, _, err := client.SendMessage(ch, content,
+			if _, _, _, err := client.SendMessage(channel.GetName(), content,
 				slack.MsgOptionAsUser(false),
 				slack.MsgOptionIconURL(iconURL),
 				slack.MsgOptionUsername(msg.From),
 			); err != nil {
-				logrus.Errorf("send msg to %s failed: %v", ch, err)
+				logrus.Errorf("send msg to %s failed: %v", channel.GetName(), err)
 			}
 		})
 	}
