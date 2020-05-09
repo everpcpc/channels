@@ -74,7 +74,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		)
 
 	case "pull_request":
-		if msg.Action == "synchronize" {
+		if msg.Action == "synchronize" || msg.Action == "edited" {
 			c.JSON(200, gin.H{"status": "ignored"})
 			return
 		}
