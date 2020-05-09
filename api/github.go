@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -80,8 +81,10 @@ func (e *env) webhookGitHub(c *gin.Context) {
 			if len(sha) > 7 {
 				sha = commit.ID[:6]
 			}
-			m.Text += fmt.Sprintf("-> %s-{%s}-%s",
-				sha, commit.Message, commit.Author.Name)
+
+			m.Text += fmt.Sprintf("> %s@%s{%s}\n",
+				sha, commit.Author.Name,
+				strings.SplitN(commit.Message, "\n", 2)[0])
 		}
 
 	case "issues":
