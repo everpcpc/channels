@@ -23,6 +23,16 @@ type githubMessage struct {
 		Message string
 		URL     string
 	} `json:"head_commit"`
+	Commits []struct {
+		Sha     string
+		Message string
+		Author  struct {
+			Name  string
+			Email string
+		}
+		URL      string
+		Distinct bool
+	}
 	Issue struct {
 		Title   string
 		HtmlURL string `json:"html_url"`
@@ -61,11 +71,12 @@ func (e *env) webhookGitHub(c *gin.Context) {
 	switch event {
 
 	case "push":
-		// TODO: show more commits
-		m.Text = fmt.Sprintf("[%s] %s pushed commit\n{%s}\n( %s )",
+		m.Text = fmt.Sprintf("[%s] %s pushed commits:\n",
 			msg.Repository.FullName, msg.Sender.Login,
-			msg.HeadCommit.Message, msg.HeadCommit.URL,
 		)
+		for _, commit := range msg.Commits {
+			m.Text += fmt.Sprintf("- {%s}(%s)", commit.Message, commit.Author.Name)
+		}
 
 	case "issues":
 		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n( %s )",
