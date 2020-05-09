@@ -18,7 +18,11 @@ type env struct {
 }
 
 func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store storage.Backend) {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		SkipPaths: []string{"/ping"},
+	}))
+	r.Use(gin.Recovery())
 
 	e := &env{
 		store:       store,
