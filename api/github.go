@@ -88,7 +88,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		}
 
 	case "issues":
-		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n>{%s}\n( %s )",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.Issue.Number, msg.Issue.Title, msg.Issue.HtmlURL,
 		)
@@ -101,7 +101,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		if msg.Action == "closed" && msg.PullRequest.Merged {
 			msg.Action = "merged"
 		}
-		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n( %s )",
+		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n>{%s}\n( %s )",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.PullRequest.Number, msg.PullRequest.Title, msg.PullRequest.HtmlURL,
 		)
