@@ -11,10 +11,12 @@ import (
 )
 
 type githubMessage struct {
+	Ref        string
 	Repository struct {
 		ID       int64
 		Name     string
 		FullName string `json:"full_name"`
+		HtmlURL  string `json:"html_url"`
 	}
 	Sender struct {
 		Login string
@@ -73,8 +75,14 @@ func (e *env) webhookGitHub(c *gin.Context) {
 	switch event {
 
 	case "push":
-		m.Text = fmt.Sprintf("[%s] %s pushed commits:\n",
-			msg.Repository.FullName, msg.Sender.Login,
+		branch := strings.TrimPrefix(msg.Ref, "refs/heads/")
+
+		m.Text = fmt.Sprintf("[%s:%s] %s pushed commits:\n",
+			msg.Repository.FullName, branch, msg.Sender.Login,
+		)
+		m.Markdown = fmt.Sprintf("<%s|[%s:%s]> %s pushed commits:\n",
+			msg.Repository.HtmlURL, msg.Repository.FullName,
+			branch, msg.Sender.Login,
 		)
 		for _, commit := range msg.Commits {
 			sha := commit.ID
@@ -82,15 +90,23 @@ func (e *env) webhookGitHub(c *gin.Context) {
 				sha = commit.ID[:6]
 			}
 
-			m.Text += fmt.Sprintf("> %s@%s{%s}\n",
+			m.Text += fmt.Sprintf("-> %s@%s{%s}\n",
 				sha, commit.Author.Name,
 				strings.SplitN(commit.Message, "\n", 2)[0])
+			m.Markdown += fmt.Sprintf("> `<%s|%s>` %s - %s",
+				commit.URL, sha, commit.Message, commit.Author.Name)
 		}
 
 	case "issues":
-		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n>{%s}\n( %s )",
-			msg.Repository.FullName, msg.Sender.Login, msg.Action,
+		m.Text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n( %s )",
+			msg.Repository.FullName,
+			msg.Sender.Login, msg.Action,
 			msg.Issue.Number, msg.Issue.Title, msg.Issue.HtmlURL,
+		)
+		m.Markdown = fmt.Sprintf("<%s|[%s]> %s %s issue <%s|#%d %s>",
+			msg.Repository.HtmlURL, msg.Repository.FullName,
+			msg.Sender.Login, msg.Action,
+			msg.Issue.HtmlURL, msg.Issue.Number, msg.Issue.Title,
 		)
 
 	case "pull_request":
@@ -101,9 +117,15 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		if msg.Action == "closed" && msg.PullRequest.Merged {
 			msg.Action = "merged"
 		}
-		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n>{%s}\n( %s )",
-			msg.Repository.FullName, msg.Sender.Login, msg.Action,
+		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n( %s )",
+			msg.Repository.FullName,
+			msg.Sender.Login, msg.Action,
 			msg.PullRequest.Number, msg.PullRequest.Title, msg.PullRequest.HtmlURL,
+		)
+		m.Markdown = fmt.Sprintf("<%s|[%s]> %s %s pull request <%s|#%d %s>",
+			msg.Repository.HtmlURL, msg.Repository.FullName,
+			msg.Sender.Login, msg.Action, msg.PullRequest.HtmlURL,
+			msg.PullRequest.Number, msg.PullRequest.Title,
 		)
 
 	default:
