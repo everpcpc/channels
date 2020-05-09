@@ -65,6 +65,11 @@ irc:
   #   cpu: 100m
   #   memory: 128Mi
 
+slack:
+  enabled: false
+  replicaCount: 1
+  resources: {}
+
 volumeMounts:
   - name: channels-config
     mountPath: /app/config.json
