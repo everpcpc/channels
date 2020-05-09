@@ -24,7 +24,7 @@ type githubMessage struct {
 		URL     string
 	} `json:"head_commit"`
 	Commits []struct {
-		Sha     string
+		ID      string
 		Message string
 		Author  struct {
 			Name  string
@@ -76,9 +76,9 @@ func (e *env) webhookGitHub(c *gin.Context) {
 			msg.Repository.FullName, msg.Sender.Login,
 		)
 		for _, commit := range msg.Commits {
-			sha := commit.Sha
+			sha := commit.ID
 			if len(sha) > 7 {
-				sha = commit.Sha[:6]
+				sha = commit.ID[:6]
 			}
 			m.Text += fmt.Sprintf("-> %s-{%s}-%s",
 				sha, commit.Message, commit.Author.Name)
