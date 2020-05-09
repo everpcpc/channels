@@ -74,6 +74,10 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		)
 
 	case "pull_request":
+		if msg.Action == "synchronize" {
+			c.JSON(200, gin.H{"status": "ignored"})
+			return
+		}
 		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n(%s)",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
 			msg.PullRequest.Number, msg.PullRequest.Title, msg.PullRequest.HtmlURL,
