@@ -48,11 +48,34 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
+	var text string
+	if msg.Status == "firing" {
+		text = "🔥"
+	}
+	text += fmt.Sprintf("[%s:%s] %s {%v}->labels{",
+		msg.Status, msg.Version, msg.CommonLabels["severity"],
+		msg.GroupLabels["alertname"])
+	for k, v := range msg.CommonLabels {
+		if k == "alertname" || k == "severity" {
+			continue
+		}
+		text += k + ":" + v + ","
+	}
+	if len(msg.CommonAnnotations) > 0 {
+		text += "}\nannotations{"
+		for k, v := range msg.CommonAnnotations {
+			if k == "alertname" || k == "severity" {
+				continue
+			}
+			text += k + ":" + v + ","
+		}
+	}
+	text += "}"
+
 	m := storage.Message{
-		From: caller.Name,
-		To:   caller.Caps[0],
-		Text: fmt.Sprintf("[%s:%s] {%v}-{%v}",
-			msg.Status, msg.Version, msg.GroupLabels, msg.CommonLabels),
+		From:      caller.Name,
+		To:        caller.Caps[0],
+		Text:      text,
 		Timestamp: time.Now().UnixNano(),
 	}
 
