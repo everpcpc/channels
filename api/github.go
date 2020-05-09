@@ -76,7 +76,12 @@ func (e *env) webhookGitHub(c *gin.Context) {
 			msg.Repository.FullName, msg.Sender.Login,
 		)
 		for _, commit := range msg.Commits {
-			m.Text += fmt.Sprintf("- {%s}(%s)", commit.Message, commit.Author.Name)
+			sha := commit.Sha
+			if len(sha) > 7 {
+				sha = commit.Sha[:6]
+			}
+			m.Text += fmt.Sprintf("-> %s-{%s}-%s",
+				sha, commit.Message, commit.Author.Name)
 		}
 
 	case "issues":
