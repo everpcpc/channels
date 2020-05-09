@@ -2,6 +2,7 @@ package slack
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -61,8 +62,10 @@ func Run(cfg *Config, store storage.Backend) {
 		channel.SetSendFn(func(msg *storage.Message) {
 			iconURL := "https://www.gravatar.com/avatar/"
 			h := md5.New()
-			if _, err := io.WriteString(h, fmt.Sprintf(cfg.GravatarMail, msg.From)); err == nil {
-				iconURL += string(h.Sum(nil))
+			if _, err := io.WriteString(h, fmt.Sprintf(cfg.GravatarMail, msg.From)); err != nil {
+				logrus.Warnf("email md5 failed: %v", err)
+			} else {
+				iconURL += hex.EncodeToString(h.Sum(nil))
 			}
 			var content slack.MsgOption
 			if msg.Markdown != "" {
