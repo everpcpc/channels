@@ -42,6 +42,7 @@ type githubMessage struct {
 		Title   string
 		HtmlURL string `json:"html_url"`
 		Number  int64
+		Merged  bool
 	} `json:"pull_request"`
 }
 
@@ -88,6 +89,9 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		if msg.Action == "synchronize" || msg.Action == "edited" {
 			c.JSON(200, gin.H{"status": "ignored"})
 			return
+		}
+		if msg.Action == "closed" && msg.PullRequest.Merged {
+			msg.Action = "merged"
 		}
 		m.Text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n( %s )",
 			msg.Repository.FullName, msg.Sender.Login, msg.Action,
