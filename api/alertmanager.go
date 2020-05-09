@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -49,28 +50,27 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		return
 	}
 	var text string
-	if msg.Status == "firing" {
+	switch msg.Status {
+	case "firing":
 		text = "🔥"
+	case "resolved":
+		text = "✅"
 	}
-	text += fmt.Sprintf("[%s:%s] %s {%v}->labels{",
-		msg.Status, msg.Version, msg.CommonLabels["severity"],
-		msg.GroupLabels["alertname"])
+
+	text += fmt.Sprintf("[%s:%s] %s %s: %s\n",
+		msg.Status, msg.Version,
+		msg.GroupLabels["alertname"],
+		msg.CommonLabels["severity"],
+		msg.CommonAnnotations["summary"],
+	)
+	var labels []string
 	for k, v := range msg.CommonLabels {
 		if k == "alertname" || k == "severity" {
 			continue
 		}
-		text += k + ":" + v + ","
+		labels = append(labels, k+"="+v)
 	}
-	if len(msg.CommonAnnotations) > 0 {
-		text += "}\nannotations{"
-		for k, v := range msg.CommonAnnotations {
-			if k == "alertname" || k == "severity" {
-				continue
-			}
-			text += k + ":" + v + ","
-		}
-	}
-	text += "}"
+	text += "labels{" + strings.Join(labels, ",") + "}"
 
 	m := storage.Message{
 		From:      caller.Name,
