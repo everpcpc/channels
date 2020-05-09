@@ -82,6 +82,7 @@ func (h *userHandler) handleCmdJoin(s state.State, user *state.User, conn connec
 		channel := s.GetChannel(name)
 		if channel == nil {
 			channel = s.NewChannel(name)
+			channel.SetSendFn(channel.SendUsers)
 			defer s.RecycleChannel(channel)
 		}
 

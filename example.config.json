@@ -10,8 +10,17 @@
             "certfile": ""
         }
     },
+    "slack": {
+        "name": "example.slack.com",
+        "token": "",
+        "proxy": "",
+        "gravatarMail": "bot+%s@example.com",
+        "joinChannels": [
+            "#general"
+        ]
+    },
     "ldap": {
-        "url":"ldap://example.com:389",
+        "url": "ldap://example.com:389",
         "bindDN": "cn=test,ou=users,dc=example,dc=com",
         "bindPass": "password",
         "searchFilter": "(uid=%s)",

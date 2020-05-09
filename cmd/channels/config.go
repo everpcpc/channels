@@ -9,11 +9,13 @@ import (
 
 	"channels/auth"
 	"channels/irc"
+	"channels/slack"
 	"channels/storage"
 )
 
 type config struct {
 	IRC         *irc.Config
+	Slack       *slack.Config
 	AuthIRC     string `json:"auth.irc"`
 	AuthWebhook string `json:"auth.webhook"`
 	LDAP        *auth.LDAPAuth

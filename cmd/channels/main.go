@@ -7,6 +7,7 @@ import (
 	"channels/api"
 	"channels/auth"
 	"channels/irc"
+	"channels/slack"
 	"channels/storage"
 )
 
@@ -63,6 +64,14 @@ func main() {
 		},
 	}
 
+	var cmdSlack = &cobra.Command{
+		Use:   "slack",
+		Short: "Run the slack forwarder",
+		Run: func(cmd *cobra.Command, args []string) {
+			slack.Run(cfg.Slack, store)
+		},
+	}
+
 	var cmdAPI = &cobra.Command{
 		Use:   "api",
 		Short: "Run the api server",
@@ -79,6 +88,6 @@ func main() {
 
 	var cmdToken = getTokenCommand(&tokenStore)
 
-	rootCmd.AddCommand(cmdIRC, cmdAPI, cmdToken)
+	rootCmd.AddCommand(cmdIRC, cmdSlack, cmdAPI, cmdToken)
 	rootCmd.Execute()
 }
