@@ -4,6 +4,7 @@
 
 image:
   repository: everpcpc/channels
+  tag: latest
   pullPolicy: Always
 
 imagePullSecrets: []
