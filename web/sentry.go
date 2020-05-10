@@ -12,15 +12,20 @@ import (
 // sentryMessage from:
 // https://github.com/getsentry/sentry/blob/master/src/sentry/plugins/sentry_webhooks/plugin.py#L97
 type sentryMessage struct {
-	ID              string
-	Project         string
-	ProjectName     string `json:"project_name"`
-	ProjectSlug     string `json:"project_slug"`
-	Logger          string
-	Level           string
-	Culprit         string
-	Message         string
-	URL             string
+	ID          string
+	Project     string
+	ProjectName string `json:"project_name"`
+	ProjectSlug string `json:"project_slug"`
+
+	// HACK: add team in sentry webhook data
+	Team string
+
+	Logger  string
+	Level   string
+	Culprit string
+	Message string
+	URL     string
+
 	TriggeringRules []string `json:"triggering_rules"`
 }
 
@@ -41,9 +46,20 @@ func (e *env) webhookSentry(c *gin.Context) {
 		return
 	}
 
+	var target string
+	if caller.Caps[0] == "#" {
+		if msg.Team == "" {
+			c.AbortWithStatusJSON(400, gin.H{"error": "no target"})
+			return
+		}
+		target = "#" + msg.Team
+	} else {
+		target = caller.Caps[0]
+	}
+
 	m := storage.Message{
 		From:      caller.Name,
-		To:        caller.Caps[0],
+		To:        target,
 		Text:      fmt.Sprintf("[%s] %s (%s)", msg.Project, msg.Message, msg.URL),
 		Timestamp: time.Now().UnixNano(),
 	}
