@@ -41,7 +41,7 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-api:
+web:
   replicaCount: 2
   port: 80
   service:
@@ -51,6 +51,7 @@ api:
   resources: {}
 
 irc:
+  enabled: true
   replicaCount: 2
   port: 6667
   service:

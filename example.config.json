@@ -30,6 +30,7 @@
     },
     "auth.irc": "ldap",
     "auth.webhook": "token",
+    "auth.web": "openid",
     "storage": "redis",
     "redis": {
         "network": "tcp",
@@ -37,5 +38,5 @@
         "password": "",
         "db": 0
     },
-    "api.port": 80
+    "web.port": 80
 }

@@ -4,11 +4,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"channels/api"
 	"channels/auth"
 	"channels/irc"
 	"channels/slack"
 	"channels/storage"
+	"channels/web"
 )
 
 func main() {
@@ -72,9 +72,9 @@ func main() {
 		},
 	}
 
-	var cmdAPI = &cobra.Command{
-		Use:   "api",
-		Short: "Run the api server",
+	var cmdWeb = &cobra.Command{
+		Use:   "web",
+		Short: "Run the web server",
 		Run: func(cmd *cobra.Command, args []string) {
 			var webhookAuth auth.Plugin
 			if cfg.AuthWebhook == "token" {
@@ -82,12 +82,12 @@ func main() {
 			} else {
 				webhookAuth = &auth.Anonymous{}
 			}
-			api.RunServer(cfg.APIPort, &auth.Anonymous{}, webhookAuth, store)
+			web.RunServer(cfg.WebPort, &auth.Anonymous{}, webhookAuth, store)
 		},
 	}
 
 	var cmdToken = getTokenCommand(&tokenStore)
 
-	rootCmd.AddCommand(cmdIRC, cmdSlack, cmdAPI, cmdToken)
+	rootCmd.AddCommand(cmdIRC, cmdSlack, cmdWeb, cmdToken)
 	rootCmd.Execute()
 }

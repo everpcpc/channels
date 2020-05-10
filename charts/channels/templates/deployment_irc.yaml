@@ -1,3 +1,4 @@
+{{- if .Values.irc.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ include "channels.name" . }}
 spec:
-  replicas: {{ .Values.api.replicaCount }}
+  replicas: {{ .Values.irc.replicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "channels.name" . }}-irc
@@ -58,5 +59,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
 
 # vi: ft=goyaml

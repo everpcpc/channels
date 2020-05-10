@@ -1,4 +1,4 @@
-package api
+package web
 
 import (
 	"fmt"
@@ -35,12 +35,12 @@ func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store 
 		})
 	})
 
-	api := r.Group("/api")
+	webhook := r.Group("/webhook")
 	{
-		api.POST("/message/:token", e.postMessage)
-		api.POST("/sentry/:token", e.webhookSentry)
-		api.POST("/github/:token", e.webhookGitHub)
-		api.POST("/alertmanager/:token", e.webhookAlertManager)
+		webhook.POST("/message/:token", e.postMessage)
+		webhook.POST("/sentry/:token", e.webhookSentry)
+		webhook.POST("/github/:token", e.webhookGitHub)
+		webhook.POST("/alertmanager/:token", e.webhookAlertManager)
 	}
 
 	r.Run(fmt.Sprintf(":%d", port))

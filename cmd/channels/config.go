@@ -18,8 +18,9 @@ type config struct {
 	Slack       *slack.Config
 	AuthIRC     string `json:"auth.irc"`
 	AuthWebhook string `json:"auth.webhook"`
+	AuthWeb     string `json:"auth.web"`
 	LDAP        *auth.LDAPAuth
-	APIPort     int `json:"api.port"`
+	WebPort     int `json:"web.port"`
 	Storage     string
 	Redis       *storage.RedisConfig
 }
