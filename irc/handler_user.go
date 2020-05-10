@@ -141,7 +141,10 @@ func (h *userHandler) handleCmdPart(s state.State, user *state.User, conn connec
 			continue
 		}
 
-		conn.send(cmdPart.withPrefix(user.GetName()).withParams(channel.GetName()).withTrailing(reason))
+		conn.send(cmdPart.withPrefix(fmt.Sprintf(
+			"%s!%s@%s", user.GetName(), user.GetName(), s.GetName(),
+		)).withParams(channel.GetName()).withTrailing(reason))
+
 		s.PartChannel(channel, user, reason)
 	}
 	return h
