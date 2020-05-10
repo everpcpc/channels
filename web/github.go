@@ -113,7 +113,7 @@ func messageFromGithubDelete(msg *githubMessage) (text string, markdown string, 
 		msg.Sender.Login, msg.RefType,
 		msg.Ref,
 	)
-	markdown = fmt.Sprintf("<%s|[%s]> %s deleted %s:%s",
+	markdown = fmt.Sprintf("<%s|[%s]> %s deleted %s `%s`",
 		msg.Repository.HtmlURL, msg.Repository.FullName,
 		msg.Sender.Login, msg.RefType,
 		msg.Ref,
