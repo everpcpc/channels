@@ -49,16 +49,16 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	var text string
-	switch msg.Status {
-	case "firing":
-		text = "🔥"
-	case "resolved":
-		text = "✅"
-	}
 
-	text += fmt.Sprintf("[%s:%s] %s %s: %s\n",
-		msg.Status, msg.Version,
+	text := fmt.Sprintf("%s:%s [%s] is %s: %s\n",
+		getStatusEmoji(msg.Status), msg.Version,
+		msg.GroupLabels["alertname"],
+		msg.CommonLabels["severity"],
+		msg.CommonAnnotations["summary"],
+	)
+	markdown := text + fmt.Sprintf("%s:%s <%s|[%s] is %s: %s>\n",
+		msg.ExternalURL,
+		getStatusEmoji(msg.Status), msg.Version,
 		msg.GroupLabels["alertname"],
 		msg.CommonLabels["severity"],
 		msg.CommonAnnotations["summary"],
@@ -71,11 +71,19 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		labels = append(labels, k+"="+v)
 	}
 	text += "labels{" + strings.Join(labels, ",") + "}"
+	markdown += "`labels{" + strings.Join(labels, ",") + "}`\n"
+
+	for _, alert := range msg.Alerts {
+		markdown += fmt.Sprintf("> %s <%s|%s>",
+			getStatusEmoji(alert.Status),
+			alert.GeneratorURL, alert.Annotations["summary"])
+	}
 
 	m := storage.Message{
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Text:      text,
+		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
 
@@ -85,4 +93,14 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"status": "success"})
+}
+
+func getStatusEmoji(status string) string {
+	switch status {
+	case "firing":
+		return "🔥"
+	case "resolved":
+		return "✅"
+	}
+	return status
 }
