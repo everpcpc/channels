@@ -138,7 +138,7 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 	for _, commit := range msg.Commits {
 		sha := commit.ID
 		if len(sha) > 7 {
-			sha = commit.ID[:6]
+			sha = commit.ID[:7]
 		}
 
 		text += fmt.Sprintf("-> %s@%s{%s}\n",
