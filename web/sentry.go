@@ -18,7 +18,8 @@ type sentryMessage struct {
 	ProjectSlug string `json:"project_slug"`
 
 	// HACK: add first team in sentry webhook data
-	Team string
+	Team  string
+	Title string
 
 	Logger  string
 	Level   string
@@ -56,9 +57,11 @@ func (e *env) webhookSentry(c *gin.Context) {
 	} else {
 		target = caller.Caps[0]
 	}
-	text := fmt.Sprintf("[%s] %s ( %s )", msg.Project, msg.Message, msg.URL)
+	text := fmt.Sprintf("[%s] %s-%s ( %s )",
+		msg.Project, msg.Title, msg.Message, msg.URL)
+
 	markdown := fmt.Sprintf("[%s] <%s|%s>\n> %s",
-		msg.Project, msg.URL, msg.Culprit, msg.Message)
+		msg.Project, msg.URL, msg.Title, msg.Message)
 
 	m := storage.Message{
 		From:      caller.Name,
