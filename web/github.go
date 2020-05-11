@@ -128,10 +128,10 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 	}
 	branch := strings.TrimPrefix(msg.Ref, "refs/heads/")
 
-	text = fmt.Sprintf("[%s:%s] %s pushed commits:\n",
+	text = fmt.Sprintf("[%s:%s] %s pushed commits: ",
 		msg.Repository.FullName, branch, msg.Sender.Login,
 	)
-	markdown = fmt.Sprintf("<%s|[%s:%s]> %s pushed commits:\n",
+	markdown = fmt.Sprintf("<%s|[%s:%s]> %s pushed commits:",
 		msg.Repository.HtmlURL, msg.Repository.FullName,
 		branch, msg.Sender.Login,
 	)
@@ -144,7 +144,7 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 		text += fmt.Sprintf("-> %s@%s{%s}\n",
 			sha, commit.Author.Name,
 			strings.SplitN(commit.Message, "\n", 2)[0])
-		markdown += fmt.Sprintf("> `<%s|%s>` %s - %s\n",
+		markdown += fmt.Sprintf("\n> `<%s|%s>` %s - %s\n",
 			commit.URL, sha, commit.Message, commit.Author.Name)
 	}
 	return
