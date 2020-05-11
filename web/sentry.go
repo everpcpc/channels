@@ -56,11 +56,15 @@ func (e *env) webhookSentry(c *gin.Context) {
 	} else {
 		target = caller.Caps[0]
 	}
+	text := fmt.Sprintf("[%s] %s ( %s )", msg.Project, msg.Message, msg.URL)
+	markdown := fmt.Sprintf("[%s] <%s|%s>\n> %s",
+		msg.Project, msg.URL, msg.Culprit, msg.Message)
 
 	m := storage.Message{
 		From:      caller.Name,
 		To:        target,
-		Text:      fmt.Sprintf("[%s] %s ( %s )", msg.Project, msg.Message, msg.URL),
+		Text:      text,
+		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
 	if err := e.store.Save(&m); err != nil {
