@@ -24,6 +24,10 @@ type githubMessage struct {
 		FullName string `json:"full_name"`
 		HtmlURL  string `json:"html_url"`
 	}
+	Organization struct {
+		Login string
+	}
+
 	Sender struct {
 		Login string
 	}
@@ -74,9 +78,9 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
+
 	m := storage.Message{
 		From:      caller.Name,
-		To:        caller.Caps[0],
 		Timestamp: time.Now().UnixNano(),
 	}
 
@@ -96,6 +100,16 @@ func (e *env) webhookGitHub(c *gin.Context) {
 	if err != nil {
 		c.JSON(200, gin.H{"status": err.Error()})
 		return
+	}
+
+	if caller.Caps[0] != "#" {
+		m.To = caller.Caps[0]
+	} else {
+		if msg.Organization.Login == "" {
+			c.JSON(400, gin.H{"status": "no target"})
+			return
+		}
+		m.To = "#" + msg.Organization.Login
 	}
 
 	err = e.store.Save(&m)
