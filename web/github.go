@@ -165,6 +165,10 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 }
 
 func messageFromGithubIssues(msg *githubMessage) (text string, markdown string, err error) {
+	if msg.Action == "edited" {
+		err = errEventIgnored
+		return
+	}
 	text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n( %s )",
 		msg.Repository.FullName,
 		msg.Sender.Login, msg.Action,
