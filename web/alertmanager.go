@@ -50,17 +50,17 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		return
 	}
 
-	text := fmt.Sprintf("%s:%s [%s] is %s: %s\n( %s )\n",
-		getStatusEmoji(msg.Status), msg.Version,
-		msg.GroupLabels["alertname"],
+	text := fmt.Sprintf("%s [%s:%s] is %s: %s\n( %s )\n",
+		getStatusEmoji(msg.Status),
+		msg.GroupLabels["alertname"], msg.Version,
 		msg.CommonLabels["severity"],
 		msg.CommonAnnotations["summary"],
 		msg.ExternalURL,
 	)
-	markdown := text + fmt.Sprintf("%s:%s <%s|[%s] is %s: %s>\n",
+	markdown := text + fmt.Sprintf("%s <%s|[%s:%s] is %s: %s>\n",
+		getStatusEmoji(msg.Status),
 		msg.ExternalURL,
-		getStatusEmoji(msg.Status), msg.Version,
-		msg.GroupLabels["alertname"],
+		msg.GroupLabels["alertname"], msg.Version,
 		msg.CommonLabels["severity"],
 		msg.CommonAnnotations["summary"],
 	)
@@ -75,8 +75,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 	markdown += "`labels{" + strings.Join(labels, ",") + "}`\n"
 
 	for _, alert := range msg.Alerts {
-		markdown += fmt.Sprintf("> %s <%s|%s>",
-			getStatusEmoji(alert.Status),
+		markdown += fmt.Sprintf("> <%s|%s>",
 			alert.GeneratorURL, alert.Annotations["summary"])
 	}
 
