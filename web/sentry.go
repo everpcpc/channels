@@ -17,10 +17,6 @@ type sentryMessage struct {
 	ProjectName string `json:"project_name"`
 	ProjectSlug string `json:"project_slug"`
 
-	// HACK: add first team in sentry webhook data
-	Team  string
-	Title string
-
 	Logger  string
 	Level   string
 	Culprit string
@@ -47,25 +43,15 @@ func (e *env) webhookSentry(c *gin.Context) {
 		return
 	}
 
-	var target string
-	if caller.Caps[0] == "#" {
-		if msg.Team == "" {
-			c.AbortWithStatusJSON(400, gin.H{"error": "no target"})
-			return
-		}
-		target = "#" + msg.Team
-	} else {
-		target = caller.Caps[0]
-	}
-	text := fmt.Sprintf("[%s] %s-%s ( %s )",
-		msg.Project, msg.Title, msg.Message, msg.URL)
+	text := fmt.Sprintf("[%s] %s ( %s )",
+		msg.Project, msg.Message, msg.URL)
 
-	markdown := fmt.Sprintf("[%s] <%s|%s>\n> %s",
-		msg.Project, msg.URL, msg.Title, msg.Message)
+	markdown := fmt.Sprintf("[%s] <%s|%s>",
+		msg.Project, msg.URL, msg.Message)
 
 	m := storage.Message{
 		From:      caller.Name,
-		To:        target,
+		To:        caller.Caps[0],
 		Text:      text,
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
