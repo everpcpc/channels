@@ -155,11 +155,11 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 			sha = commit.ID[:7]
 		}
 
+		commitMessage := strings.SplitN(commit.Message, "\n", 2)[0]
 		text += fmt.Sprintf("-> %s@%s{%s}\n",
-			sha, commit.Author.Name,
-			strings.SplitN(commit.Message, "\n", 2)[0])
+			sha, commit.Author.Name, commitMessage)
 		markdown += fmt.Sprintf("\n> `<%s|%s>` %s - %s\n",
-			commit.URL, sha, commit.Message, commit.Author.Name)
+			commit.URL, sha, commitMessage, commit.Author.Name)
 	}
 	return
 }
