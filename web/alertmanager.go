@@ -57,7 +57,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		msg.CommonAnnotations["summary"],
 		msg.ExternalURL,
 	)
-	markdown := text + fmt.Sprintf("%s <%s|[%s:%s] is %s: %s>\n",
+	markdown := fmt.Sprintf("%s <%s|[%s:%s] is %s: %s>\n",
 		getStatusEmoji(msg.Status),
 		msg.ExternalURL,
 		msg.GroupLabels["alertname"], msg.Version,
