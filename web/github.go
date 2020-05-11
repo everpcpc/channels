@@ -150,7 +150,7 @@ func messageFromGithubPush(msg *githubMessage) (text string, markdown string, er
 	return
 }
 
-func messageFromGithubPullRequest(msg *githubMessage) (text string, markdown string, err error) {
+func messageFromGithubIssues(msg *githubMessage) (text string, markdown string, err error) {
 	text = fmt.Sprintf("[%s] %s %s issue #%d\n{%s}\n( %s )",
 		msg.Repository.FullName,
 		msg.Sender.Login, msg.Action,
@@ -164,7 +164,7 @@ func messageFromGithubPullRequest(msg *githubMessage) (text string, markdown str
 	return
 }
 
-func messageFromGithubIssues(msg *githubMessage) (text string, markdown string, err error) {
+func messageFromGithubPullRequest(msg *githubMessage) (text string, markdown string, err error) {
 	if msg.Action == "synchronize" || msg.Action == "edited" {
 		err = errEventIgnored
 		return
