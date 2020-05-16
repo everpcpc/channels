@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/getsentry/sentry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -33,6 +34,16 @@ func main() {
 			}
 
 			cfg = readConfig(flagConfig)
+
+			if cfg.SentryDSN != "" {
+				err = sentry.Init(sentry.ClientOptions{
+					Dsn:              cfg.SentryDSN,
+					AttachStacktrace: true,
+				})
+				if err != nil {
+					logrus.Fatal(err)
+				}
+			}
 
 			switch cfg.Storage {
 			case "redis":

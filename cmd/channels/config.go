@@ -22,6 +22,8 @@ type config struct {
 	LDAP    *auth.LDAPAuth
 	Storage string
 	Redis   *storage.RedisConfig
+
+	SentryDSN string
 }
 
 func readConfig(f string) *config {
