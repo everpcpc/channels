@@ -44,10 +44,10 @@ ingress:
 
 web:
   replicaCount: 2
-  port: 80
+  port: 8989
   service:
     type: ClusterIP
-    port: 80
+    port: 8989
     annotations: {}
   resources: {}
 
