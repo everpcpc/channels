@@ -13,7 +13,7 @@ type Config struct {
 	Listen      string
 	WebhookAuth string
 	APIAuth     string
-	SlackToken  string
+	SlackSecret string
 }
 
 type env struct {
@@ -56,9 +56,9 @@ func RunServer(cfg *Config, store storage.Backend, tokenStore storage.TokenBacke
 		webhook.POST("/alertmanager/:token", e.webhookAlertManager)
 	}
 
-	if cfg.SlackToken != "" {
+	if cfg.SlackSecret != "" {
 		slack := r.Group("/slack")
-		slack.POST("/events", e.slackEvents(cfg.SlackToken))
+		slack.POST("/events", e.slackEvents(cfg.SlackSecret))
 	}
 
 	test := r.Group("/test")

@@ -33,7 +33,7 @@
         "listen": ":8080",
         "webhookAuth": "token",
         "apiAuth": "openid",
-        "slackToken": "xoxb-xxxx"
+        "slackSecret": ""
     },
     "storage": "redis",
     "redis": {
