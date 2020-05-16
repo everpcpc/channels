@@ -42,7 +42,7 @@ func (e *env) slackEvents(secret string) func(*gin.Context) {
 		}
 
 		var event slackevents.EventsAPIEvent
-		event, err = slackevents.ParseEvent(json.RawMessage(data))
+		event, err = slackevents.ParseEvent(json.RawMessage(data), slackevents.OptionNoVerifyToken())
 		if err != nil {
 			return
 		}
