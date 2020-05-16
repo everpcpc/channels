@@ -61,5 +61,10 @@ func RunServer(cfg *Config, store storage.Backend, tokenStore storage.TokenBacke
 		slack.POST("/events", e.slackEvents(cfg.SlackToken))
 	}
 
+	test := r.Group("/test")
+	test.GET("/sentry", func(c *gin.Context) {
+		reportMessage(c, "test from channels")
+	})
+
 	r.Run(cfg.Listen)
 }
