@@ -14,11 +14,13 @@ func (e *env) slackEvents(token string) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data, err := c.GetRawData()
 		if err != nil {
+			reportError(c, err)
 			c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		event, err := slackevents.ParseEvent(json.RawMessage(data), verifyer)
 		if err != nil {
+			reportError(c, err)
 			c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 			return
 		}
@@ -27,6 +29,7 @@ func (e *env) slackEvents(token string) func(*gin.Context) {
 			var r *slackevents.ChallengeResponse
 			err := json.Unmarshal(data, &r)
 			if err != nil {
+				reportError(c, err)
 				c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 				return
 			}

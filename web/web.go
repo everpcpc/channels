@@ -1,6 +1,7 @@
 package web
 
 import (
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 
 	"channels/auth"
@@ -26,6 +27,10 @@ func RunServer(cfg *Config, store storage.Backend, tokenStore storage.TokenBacke
 		SkipPaths: []string{"/ping"},
 	}))
 	r.Use(gin.Recovery())
+
+	r.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
