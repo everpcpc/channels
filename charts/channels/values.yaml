@@ -72,20 +72,6 @@ slack:
   replicaCount: 1
   resources: {}
 
-volumeMounts:
-  - name: channels-config
-    mountPath: /app/config.json
-    subPath: config.json
-    readOnly: true
-
-volumes:
-  - name: channels-config
-    secret:
-      secretName: channels-config
-      items:
-        - key: config.json
-          path: config.json
-
 nodeSelector: {}
 
 tolerations: []
