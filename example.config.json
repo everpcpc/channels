@@ -8,7 +8,8 @@
         "sslCertificate": {
             "keyfile": "",
             "certfile": ""
-        }
+        },
+        "auth": "ldap"
     },
     "slack": {
         "name": "example.slack.com",
@@ -28,15 +29,17 @@
         "attrUsername": "uid",
         "attrMemberOf": "memberOf"
     },
-    "auth.irc": "ldap",
-    "auth.webhook": "token",
-    "auth.web": "openid",
+    "web": {
+        "listen": ":8080",
+        "webhookAuth": "token",
+        "apiAuth": "openid",
+        "slackToken": "xoxb-xxxx"
+    },
     "storage": "redis",
     "redis": {
         "network": "tcp",
         "addr": "localhost:6379",
         "password": "",
         "db": 0
-    },
-    "web.port": 80
+    }
 }

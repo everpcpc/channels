@@ -56,7 +56,7 @@ func main() {
 		Use:   "irc",
 		Short: "Run the irc server",
 		Run: func(cmd *cobra.Command, args []string) {
-			if cfg.AuthIRC == "ldap" {
+			if cfg.IRC.Auth == "ldap" {
 				irc.RunServer(cfg.IRC, cfg.LDAP, store)
 			} else {
 				irc.RunServer(cfg.IRC, &auth.Anonymous{}, store)
@@ -76,13 +76,7 @@ func main() {
 		Use:   "web",
 		Short: "Run the web server",
 		Run: func(cmd *cobra.Command, args []string) {
-			var webhookAuth auth.Plugin
-			if cfg.AuthWebhook == "token" {
-				webhookAuth = &auth.TokenAuth{Store: tokenStore}
-			} else {
-				webhookAuth = &auth.Anonymous{}
-			}
-			web.RunServer(cfg.WebPort, &auth.Anonymous{}, webhookAuth, store)
+			web.RunServer(cfg.Web, store, tokenStore)
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"channels/auth"
 	"channels/storage"
 )
 
@@ -35,8 +36,15 @@ type alertManagerMessage struct {
 
 // webhookAlertManager handles request from alertmanager as a webhook
 func (e *env) webhookAlertManager(c *gin.Context) {
-	caller, ok := e.checkToken(c)
-	if !ok {
+	ctxCaller, exists := c.Get("caller")
+	if !exists {
+		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
+		return
+	}
+	caller := ctxCaller.(*auth.Caller)
+
+	if len(caller.Caps) != 1 {
+		c.AbortWithStatusJSON(500, gin.H{"error": "caps invalid"})
 		return
 	}
 	if len(caller.Caps) != 1 {
@@ -49,7 +57,6 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-
 	text := fmt.Sprintf("%s [%s:%s] is %s: %s\n( %s )\n",
 		getStatusEmoji(msg.Status),
 		msg.GroupLabels["alertname"], msg.Version,
@@ -78,7 +85,6 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		markdown += fmt.Sprintf("> <%s|%s>",
 			alert.GeneratorURL, alert.Annotations["summary"])
 	}
-
 	m := storage.Message{
 		From:      caller.Name,
 		To:        caller.Caps[0],

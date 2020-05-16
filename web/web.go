@@ -1,8 +1,6 @@
 package web
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
 	"channels/auth"
@@ -10,24 +8,24 @@ import (
 	"channels/storage"
 )
 
-type env struct {
-	state       state.State
-	store       storage.Backend
-	authPlugin  auth.Plugin
-	webhookAuth auth.Plugin
+type Config struct {
+	Listen      string
+	WebhookAuth string
+	APIAuth     string
+	SlackToken  string
 }
 
-func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store storage.Backend) {
+type env struct {
+	state state.State
+	store storage.Backend
+}
+
+func RunServer(cfg *Config, store storage.Backend, tokenStore storage.TokenBackend) {
 	r := gin.New()
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 		SkipPaths: []string{"/ping"},
 	}))
 	r.Use(gin.Recovery())
-
-	e := &env{
-		store:       store,
-		webhookAuth: webhookAuth,
-	}
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -35,7 +33,17 @@ func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store 
 		})
 	})
 
-	webhook := r.Group("/webhook")
+	e := &env{
+		store: store,
+	}
+
+	var webhookAuth gin.HandlerFunc
+	if cfg.WebhookAuth == "token" {
+		webhookAuth = authToken(&auth.TokenAuth{Store: tokenStore})
+	} else {
+		webhookAuth = authAnoymous()
+	}
+	webhook := r.Group("/webhook", webhookAuth)
 	{
 		webhook.POST("/message/:token", e.postMessage)
 		webhook.POST("/sentry/:token", e.webhookSentry)
@@ -43,19 +51,10 @@ func RunServer(port int, authPlugin auth.Plugin, webhookAuth auth.Plugin, store 
 		webhook.POST("/alertmanager/:token", e.webhookAlertManager)
 	}
 
-	r.Run(fmt.Sprintf(":%d", port))
-}
+	if cfg.SlackToken != "" {
+		slack := r.Group("/slack")
+		slack.POST("/events", e.slackEvents(cfg.SlackToken))
+	}
 
-func (e *env) checkToken(c *gin.Context) (*auth.Caller, bool) {
-	token, ok := c.Params.Get("token")
-	if !ok {
-		c.AbortWithStatusJSON(400, gin.H{"error": "token error"})
-		return nil, false
-	}
-	caller, err := e.webhookAuth.Authenticate("token", token)
-	if err != nil {
-		c.AbortWithStatusJSON(403, gin.H{"error": "auth failed"})
-		return nil, false
-	}
-	return caller, true
+	r.Run(cfg.Listen)
 }

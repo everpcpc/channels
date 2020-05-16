@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"channels/auth"
 	"channels/storage"
 )
 
@@ -61,10 +62,13 @@ type githubMessage struct {
 
 // webhookGitHub handles request from github as a webhook
 func (e *env) webhookGitHub(c *gin.Context) {
-	caller, ok := e.checkToken(c)
-	if !ok {
+	ctxCaller, exists := c.Get("caller")
+	if !exists {
+		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
 		return
 	}
+	caller := ctxCaller.(*auth.Caller)
+
 	if len(caller.Caps) != 1 {
 		c.AbortWithStatusJSON(500, gin.H{"error": "caps invalid"})
 		return

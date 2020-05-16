@@ -11,6 +11,8 @@ type Config struct {
 	PongMaxLatency int
 
 	SSLCertificate SSLCertificate
+
+	Auth string
 }
 
 // SSLCertificate contains the paths to the private key and certificate files to

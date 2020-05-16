@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"channels/auth"
 	"channels/storage"
 )
 
@@ -15,10 +16,12 @@ type message struct {
 }
 
 func (e *env) postMessage(c *gin.Context) {
-	caller, ok := e.checkToken(c)
-	if !ok {
+	ctxCaller, exists := c.Get("caller")
+	if !exists {
+		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
 		return
 	}
+	caller := ctxCaller.(*auth.Caller)
 
 	var msg message
 	if err := c.BindJSON(&msg); err != nil {

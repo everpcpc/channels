@@ -11,18 +11,17 @@ import (
 	"channels/irc"
 	"channels/slack"
 	"channels/storage"
+	"channels/web"
 )
 
 type config struct {
-	IRC         *irc.Config
-	Slack       *slack.Config
-	AuthIRC     string `json:"auth.irc"`
-	AuthWebhook string `json:"auth.webhook"`
-	AuthWeb     string `json:"auth.web"`
-	LDAP        *auth.LDAPAuth
-	WebPort     int `json:"web.port"`
-	Storage     string
-	Redis       *storage.RedisConfig
+	IRC   *irc.Config
+	Slack *slack.Config
+	Web   *web.Config
+
+	LDAP    *auth.LDAPAuth
+	Storage string
+	Redis   *storage.RedisConfig
 }
 
 func readConfig(f string) *config {
