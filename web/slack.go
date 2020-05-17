@@ -2,13 +2,16 @@ package web
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+
+	"channels/slack"
+	"channels/storage"
 )
 
-func (e *env) slackEvents(secret string) func(*gin.Context) {
+func (s *Server) slackEvents(api *slack.Client) func(*gin.Context) {
 	return func(c *gin.Context) {
 		var err error
 		defer func() {
@@ -18,25 +21,13 @@ func (e *env) slackEvents(secret string) func(*gin.Context) {
 			}
 		}()
 
-		var secretVerifier slack.SecretsVerifier
-		secretVerifier, err = slack.NewSecretsVerifier(c.Request.Header, secret)
-		if err != nil {
-			return
-		}
-
+		var ok bool
 		var data []byte
-		data, err = c.GetRawData()
+		data, ok, err = api.VerifyWithSignedSecret(c.Request.Header, c.GetRawData)
 		if err != nil {
 			return
 		}
-
-		_, err = secretVerifier.Write(data)
-		if err != nil {
-			return
-		}
-		err = secretVerifier.Ensure()
-		if err != nil {
-			err = nil
+		if !ok {
 			c.AbortWithStatusJSON(403, gin.H{"error": "verify failed"})
 			return
 		}
@@ -55,8 +46,41 @@ func (e *env) slackEvents(secret string) func(*gin.Context) {
 				return
 			}
 			c.JSON(200, gin.H{"challenge": r.Challenge})
-		default:
-			c.Status(200)
+		case slackevents.CallbackEvent:
+			ev := event.InnerEvent
+			switch ev.Type {
+			case slackevents.Message:
+				msg := ev.Data.(*slackevents.MessageEvent)
+				// NOTE: we only deal with public channel human message
+				if msg.ChannelType != "channel" || msg.SubType != "" || msg.BotID != "" {
+					return
+				}
+				var username, channel string
+
+				username, err = api.GetUserName(msg.User)
+				if err != nil {
+					return
+				}
+				channel, err = api.GetChannelName(msg.Channel)
+				if err != nil {
+					return
+				}
+
+				m := storage.Message{
+					Source:    storage.MessageSourceSlack,
+					From:      username,
+					To:        channel,
+					Text:      msg.Text,
+					Timestamp: time.Now().UnixNano(),
+				}
+
+				err = s.store.Save(&m)
+				if err != nil {
+					return
+				}
+
+				c.JSON(200, gin.H{"status": "success"})
+			}
 		}
 	}
 }

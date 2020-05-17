@@ -61,7 +61,7 @@ type githubMessage struct {
 }
 
 // webhookGitHub handles request from github as a webhook
-func (e *env) webhookGitHub(c *gin.Context) {
+func (s *Server) webhookGitHub(c *gin.Context) {
 	ctxCaller, exists := c.Get("caller")
 	if !exists {
 		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
@@ -84,6 +84,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 	}
 
 	m := storage.Message{
+		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		Timestamp: time.Now().UnixNano(),
 	}
@@ -116,7 +117,7 @@ func (e *env) webhookGitHub(c *gin.Context) {
 		m.To = "#" + msg.Organization.Login
 	}
 
-	err = e.store.Save(&m)
+	err = s.store.Save(&m)
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return

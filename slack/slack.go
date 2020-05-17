@@ -20,39 +20,60 @@ import (
 type Config struct {
 	Name         string
 	Token        string
+	SignedSecret string
 	Proxy        string
 	GravatarMail string
 	JoinChannels []string
 }
 
-func Run(cfg *Config, store storage.Backend) {
-	st := state.New(cfg.Name, store, &auth.Anonymous{})
-	go st.Pulling()
+type Client struct {
+	name  string
+	api   *slack.Client
+	store storage.Backend
 
-	var client *slack.Client
+	joinChannels []string
 
+	signedSecret string
+
+	botGravatarMail string
+}
+
+func NewClient(cfg *Config, store storage.Backend) (c *Client, err error) {
+	c = &Client{
+		store: store,
+
+		name:         cfg.Name,
+		signedSecret: cfg.SignedSecret,
+		joinChannels: cfg.JoinChannels,
+	}
 	if cfg.Proxy == "" {
-		client = slack.New(cfg.Token)
-	} else {
-		proxyUrl, err := url.Parse(cfg.Proxy)
-		if err != nil {
-			logrus.Fatalf("proxy url error: %v", err)
-		}
-		client = slack.New(cfg.Token, slack.OptionHTTPClient(
-			&http.Client{
-				Transport: &http.Transport{
-					Proxy: http.ProxyURL(proxyUrl),
-				},
-			},
-		))
+		c.api = slack.New(cfg.Token)
+		return
 	}
 
-	for _, ch := range cfg.JoinChannels {
+	proxyUrl, err := url.Parse(cfg.Proxy)
+	if err != nil {
+		return
+	}
+	c.api = slack.New(cfg.Token, slack.OptionHTTPClient(
+		&http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyUrl),
+			},
+		},
+	))
+	return
+}
+
+func (c *Client) Run() {
+	st := state.New(c.name, c.store, &auth.Anonymous{})
+	go st.Pulling()
+
+	for _, ch := range c.joinChannels {
 		if !strings.HasPrefix(ch, "#") {
 			continue
 		}
-		// TODO: support private channels
-		_, err := client.JoinChannel(ch)
+		_, err := c.api.JoinChannel(ch)
 
 		if err != nil {
 			logrus.Warnf("join channel %s failed: %v", ch, err)
@@ -60,9 +81,13 @@ func Run(cfg *Config, store storage.Backend) {
 		}
 		channel := st.NewChannel(ch)
 		channel.SetSendFn(func(msg *storage.Message) {
+			// ignore message from self
+			if msg.Source == storage.MessageSourceSlack {
+				return
+			}
 			iconURL := "https://www.gravatar.com/avatar/"
 			h := md5.New()
-			if _, err := io.WriteString(h, fmt.Sprintf(cfg.GravatarMail, msg.From)); err != nil {
+			if _, err := io.WriteString(h, fmt.Sprintf(c.botGravatarMail, msg.From)); err != nil {
 				logrus.Warnf("email md5 failed: %v", err)
 			} else {
 				iconURL += hex.EncodeToString(h.Sum(nil))
@@ -73,7 +98,7 @@ func Run(cfg *Config, store storage.Backend) {
 			} else {
 				content = slack.MsgOptionText(msg.Text, false)
 			}
-			if _, _, _, err := client.SendMessage(channel.GetName(), content,
+			if _, _, _, err := c.api.SendMessage(channel.GetName(), content,
 				slack.MsgOptionAsUser(false),
 				slack.MsgOptionIconURL(iconURL),
 				slack.MsgOptionUsername(msg.From),

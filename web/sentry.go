@@ -28,7 +28,7 @@ type sentryMessage struct {
 }
 
 // webhookSentry handles request from sentry as a webhook
-func (e *env) webhookSentry(c *gin.Context) {
+func (s *Server) webhookSentry(c *gin.Context) {
 	ctxCaller, exists := c.Get("caller")
 	if !exists {
 		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
@@ -54,13 +54,14 @@ func (e *env) webhookSentry(c *gin.Context) {
 		msg.Project, msg.URL, msg.Message)
 
 	m := storage.Message{
+		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Text:      text,
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
-	if err := e.store.Save(&m); err != nil {
+	if err := s.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}

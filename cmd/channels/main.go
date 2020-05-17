@@ -79,7 +79,11 @@ func main() {
 		Use:   "slack",
 		Short: "Run the slack forwarder",
 		Run: func(cmd *cobra.Command, args []string) {
-			slack.Run(cfg.Slack, store)
+			client, err := slack.NewClient(cfg.Slack, store)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			client.Run()
 		},
 	}
 
@@ -87,7 +91,16 @@ func main() {
 		Use:   "web",
 		Short: "Run the web server",
 		Run: func(cmd *cobra.Command, args []string) {
-			web.RunServer(cfg.Web, store, tokenStore)
+			server := web.NewServer(cfg.Web, store, tokenStore)
+			server.WithWebhook(cfg.Web.WebhookAuth)
+			if cfg.Slack != nil {
+				api, err := slack.NewClient(cfg.Slack, store)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				server.WithSlack(api)
+			}
+			server.Run(cfg.Web.Listen)
 		},
 	}
 

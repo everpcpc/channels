@@ -2,7 +2,14 @@ package storage
 
 import "strings"
 
+const (
+	MessageSourceSlack   = "slack"
+	MessageSourceIRC     = "irc"
+	MessageSourceWebhook = "webhook"
+)
+
 type Message struct {
+	Source    string
 	From      string
 	To        string
 	Text      string

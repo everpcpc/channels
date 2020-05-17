@@ -35,7 +35,7 @@ type alertManagerMessage struct {
 }
 
 // webhookAlertManager handles request from alertmanager as a webhook
-func (e *env) webhookAlertManager(c *gin.Context) {
+func (s *Server) webhookAlertManager(c *gin.Context) {
 	ctxCaller, exists := c.Get("caller")
 	if !exists {
 		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
@@ -86,6 +86,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 			alert.GeneratorURL, alert.Annotations["summary"])
 	}
 	m := storage.Message{
+		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Text:      text,
@@ -93,7 +94,7 @@ func (e *env) webhookAlertManager(c *gin.Context) {
 		Timestamp: time.Now().UnixNano(),
 	}
 
-	if err := e.store.Save(&m); err != nil {
+	if err := s.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}

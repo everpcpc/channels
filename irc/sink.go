@@ -14,6 +14,10 @@ type sink func(message)
 
 func messageSink(conn connection) func(msg *storage.Message) {
 	return func(msg *storage.Message) {
+		// ignore message from self
+		if msg.Source == storage.MessageSourceIRC {
+			return
+		}
 		target := msg.GetTarget()
 		text := strings.NewReplacer("\n", " ", "\r", " ").Replace(msg.Text)
 

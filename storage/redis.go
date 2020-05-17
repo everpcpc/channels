@@ -91,6 +91,14 @@ func (b *BackendRedis) UnSubscribe(channel string) error {
 	return b.sub.Unsubscribe(channel)
 }
 
+func (b *BackendRedis) Get(key string) (string, error) {
+	return b.client.Get("cache:" + key).Result()
+}
+
+func (b *BackendRedis) Set(key string, value string) error {
+	return b.client.Set("cache:"+key, value, 0).Err()
+}
+
 func (b *BackendRedis) tokenKey(token string) string {
 	return "token:" + token
 }

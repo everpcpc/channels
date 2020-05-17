@@ -15,7 +15,7 @@ type message struct {
 	Markdown string
 }
 
-func (e *env) postMessage(c *gin.Context) {
+func (s *Server) postMessage(c *gin.Context) {
 	ctxCaller, exists := c.Get("caller")
 	if !exists {
 		c.AbortWithStatusJSON(403, gin.H{"error": "caller not found"})
@@ -34,13 +34,14 @@ func (e *env) postMessage(c *gin.Context) {
 	}
 
 	m := storage.Message{
+		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        msg.Target,
 		Text:      msg.Text,
 		Markdown:  msg.Markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
-	if err := e.store.Save(&m); err != nil {
+	if err := s.store.Save(&m); err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}

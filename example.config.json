@@ -14,6 +14,7 @@
     "slack": {
         "name": "example.slack.com",
         "token": "",
+        "signedSecret": "",
         "proxy": "",
         "gravatarMail": "bot+%s@example.com",
         "joinChannels": [
@@ -30,10 +31,9 @@
         "attrMemberOf": "memberOf"
     },
     "web": {
-        "listen": ":8080",
+        "listen": ":8989",
         "webhookAuth": "token",
-        "apiAuth": "openid",
-        "slackSecret": ""
+        "apiAuth": "openid"
     },
     "storage": "redis",
     "redis": {
