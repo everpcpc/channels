@@ -25,11 +25,12 @@ func newUserHandler(s chan state.State, nick string) handler {
 		nick:  nick,
 	}
 	handler.commands = commandMap{
-		cmdJoin.command:  handler.handleCmdJoin,
-		cmdNames.command: handler.handleCmdNames,
-		cmdPart.command:  handler.handleCmdPart,
-		cmdPing.command:  handler.handleCmdPing,
-		cmdQuit.command:  handler.handleCmdQuit,
+		cmdJoin.command:    handler.handleCmdJoin,
+		cmdNames.command:   handler.handleCmdNames,
+		cmdPart.command:    handler.handleCmdPart,
+		cmdPing.command:    handler.handleCmdPing,
+		cmdQuit.command:    handler.handleCmdQuit,
+		cmdPrivMsg.command: handler.handleCmdPrivMsg,
 	}
 	return handler
 }
@@ -116,6 +117,30 @@ func (h *userHandler) handleCmdNames(s state.State, user *state.User, conn conne
 		}
 		sendNames(s, user, conn.send, channel)
 	}
+	return h
+}
+
+func (h *userHandler) handleCmdPrivMsg(s state.State, user *state.User, conn connection, msg message) handler {
+	if len(msg.params) < 1 {
+		sendNumericUser(s, user, conn.send, errorNoRecipient)
+		return h
+	}
+	msgContents := msg.laxTrailing(1)
+	if msgContents == "" {
+		sendNumericUser(s, user, conn.send, errorNoTextToSend)
+		return h
+	}
+	target := msg.params[0]
+
+	// only deal with channel message
+	if !strings.HasPrefix(target, "#") {
+		return h
+	}
+	err := sendMessageBack(s, user.GetName(), target, msgContents)
+	if err != nil {
+		sendNumericUser(s, user, conn.send, errorNoTextToSend)
+	}
+
 	return h
 }
 

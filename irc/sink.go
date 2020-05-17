@@ -2,7 +2,9 @@ package irc
 
 import (
 	"strings"
+	"time"
 
+	"channels/state"
 	"channels/storage"
 )
 
@@ -44,4 +46,16 @@ func messageSink(conn connection) func(msg *storage.Message) {
 		}
 		send(text[chunks*maxLength:])
 	}
+}
+
+func sendMessageBack(s state.State, user, target, text string) error {
+	m := storage.Message{
+		Source:    storage.MessageSourceIRC,
+		From:      user,
+		To:        target,
+		Text:      text,
+		Timestamp: time.Now().UnixNano(),
+		IsHuman:   true,
+	}
+	return s.SendMessage(&m)
 }

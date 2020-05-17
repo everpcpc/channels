@@ -54,6 +54,8 @@ type State interface {
 	// reaped if there are no active users left.
 	RemoveFromChannel(*Channel, *User)
 
+	SendMessage(*storage.Message) error
+
 	Pulling()
 }
 
@@ -197,6 +199,10 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 	delete(channel.users, user)
 
 	s.RecycleChannel(channel)
+}
+
+func (s *stateImpl) SendMessage(msg *storage.Message) error {
+	return s.store.Save(msg)
 }
 
 func (s *stateImpl) Pulling() {
