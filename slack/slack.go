@@ -22,7 +22,10 @@ type Config struct {
 	Token        string
 	SignedSecret string
 	Proxy        string
-	GravatarMail string
+
+	BotGravatarMail   string
+	HumanGravatarMail string
+
 	JoinChannels []string
 }
 
@@ -35,16 +38,19 @@ type Client struct {
 
 	signedSecret string
 
-	botGravatarMail string
+	botGravatarMail   string
+	humanGravatarMail string
 }
 
 func NewClient(cfg *Config, store storage.Backend) (c *Client, err error) {
 	c = &Client{
 		store: store,
 
-		name:         cfg.Name,
-		signedSecret: cfg.SignedSecret,
-		joinChannels: cfg.JoinChannels,
+		name:              cfg.Name,
+		signedSecret:      cfg.SignedSecret,
+		botGravatarMail:   cfg.BotGravatarMail,
+		humanGravatarMail: cfg.HumanGravatarMail,
+		joinChannels:      cfg.JoinChannels,
 	}
 	if cfg.Proxy == "" {
 		c.api = slack.New(cfg.Token)
@@ -86,8 +92,15 @@ func (c *Client) Run() {
 				return
 			}
 			iconURL := "https://www.gravatar.com/avatar/"
+			var mail string
+			if msg.IsHuman {
+				mail = fmt.Sprintf(c.humanGravatarMail, msg.From)
+			} else {
+				mail = fmt.Sprintf(c.botGravatarMail, msg.From)
+			}
+
 			h := md5.New()
-			if _, err := io.WriteString(h, fmt.Sprintf(c.botGravatarMail, msg.From)); err != nil {
+			if _, err := io.WriteString(h, mail); err != nil {
 				logrus.Warnf("email md5 failed: %v", err)
 			} else {
 				iconURL += hex.EncodeToString(h.Sum(nil))

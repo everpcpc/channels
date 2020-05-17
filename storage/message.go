@@ -15,6 +15,7 @@ type Message struct {
 	Text      string
 	Markdown  string
 	Timestamp int64
+	IsHuman   bool
 }
 
 func (m *Message) GetTarget() string {

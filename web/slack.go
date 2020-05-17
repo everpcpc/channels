@@ -72,6 +72,7 @@ func (s *Server) slackEvents(api *slack.Client) func(*gin.Context) {
 					To:        channel,
 					Text:      msg.Text,
 					Timestamp: time.Now().UnixNano(),
+					IsHuman:   true,
 				}
 
 				err = s.store.Save(&m)
