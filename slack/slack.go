@@ -33,6 +33,7 @@ type Client struct {
 	name  string
 	api   *slack.Client
 	store storage.Backend
+	cache storage.CacheBackend
 
 	joinChannels []string
 
@@ -42,9 +43,10 @@ type Client struct {
 	humanGravatarMail string
 }
 
-func NewClient(cfg *Config, store storage.Backend) (c *Client, err error) {
+func NewClient(cfg *Config, store storage.Backend, cache storage.CacheBackend) (c *Client, err error) {
 	c = &Client{
 		store: store,
+		cache: cache,
 
 		name:              cfg.Name,
 		signedSecret:      cfg.SignedSecret,

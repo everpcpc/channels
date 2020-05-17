@@ -17,6 +17,7 @@ func main() {
 	var cfg *config
 	var store storage.Backend
 	var tokenStore storage.TokenBackend
+	var cache storage.CacheBackend
 	var err error
 
 	var rootCmd = &cobra.Command{
@@ -55,6 +56,10 @@ func main() {
 				if err != nil {
 					logrus.Fatal(err)
 				}
+				cache, err = storage.NewRedisBackend(cfg.Redis)
+				if err != nil {
+					logrus.Fatal(err)
+				}
 			default:
 				logrus.Fatalf("storage %s not supported", cfg.Storage)
 			}
@@ -79,7 +84,7 @@ func main() {
 		Use:   "slack",
 		Short: "Run the slack forwarder",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := slack.NewClient(cfg.Slack, store)
+			client, err := slack.NewClient(cfg.Slack, store, cache)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -94,7 +99,7 @@ func main() {
 			server := web.NewServer(cfg.Web, store, tokenStore)
 			server.WithWebhook(cfg.Web.WebhookAuth)
 			if cfg.Slack != nil {
-				api, err := slack.NewClient(cfg.Slack, store)
+				api, err := slack.NewClient(cfg.Slack, store, cache)
 				if err != nil {
 					logrus.Fatal(err)
 				}
