@@ -188,13 +188,16 @@ func messageFromGithubIssues(msg *githubMessage) (text string, markdown string, 
 }
 
 func messageFromGithubPullRequest(msg *githubMessage) (text string, markdown string, err error) {
-	if msg.Action == "synchronize" || msg.Action == "edited" {
+	switch msg.Action {
+	case "synchronize", "edited", "review_requested":
 		err = errEventIgnored
 		return
+	case "closed":
+		if msg.PullRequest.Merged {
+			msg.Action = "merged"
+		}
 	}
-	if msg.Action == "closed" && msg.PullRequest.Merged {
-		msg.Action = "merged"
-	}
+
 	text = fmt.Sprintf("[%s] %s %s pull request #%d\n{%s}\n( %s )",
 		msg.Repository.FullName,
 		msg.Sender.Login, msg.Action,
