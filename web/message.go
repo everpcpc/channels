@@ -31,9 +31,21 @@ func (s *Server) postMessage(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if !caller.IsCapable(msg.Target) {
-		c.AbortWithStatusJSON(403, gin.H{"error": "scope failed"})
-		return
+	if msg.Target != "" {
+		if !caller.IsCapable(msg.Target) {
+			c.AbortWithStatusJSON(403, gin.H{"error": "scope failed"})
+			return
+		}
+	} else {
+		if len(caller.Caps) == 0 {
+			c.AbortWithStatusJSON(500, gin.H{"error": "no caps"})
+			return
+		}
+		msg.Target = caller.Caps[0]
+		if len(msg.Target) == 1 {
+			c.AbortWithStatusJSON(500, gin.H{"error": "caps invalid"})
+			return
+		}
 	}
 
 	m := storage.Message{
