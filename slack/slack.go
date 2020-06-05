@@ -108,11 +108,26 @@ func (c *Client) Run() {
 				iconURL += hex.EncodeToString(h.Sum(nil))
 			}
 			var content slack.MsgOption
-			if msg.Markdown != "" {
-				content = slack.MsgOptionText(msg.Markdown, false)
+			if msg.Title == "" {
+				if msg.Markdown != "" {
+					content = slack.MsgOptionText(msg.Markdown, false)
+				} else {
+					content = slack.MsgOptionText(msg.Text, false)
+				}
 			} else {
-				content = slack.MsgOptionText(msg.Text, false)
+				color := "#5bc0de" // info
+				if msg.Color != "" {
+					color = msg.Color
+				}
+				attachment := slack.Attachment{
+					Title:     msg.Title,
+					TitleLink: msg.Link,
+					Text:      msg.Markdown,
+					Color:     color,
+				}
+				content = slack.MsgOptionAttachments(attachment)
 			}
+
 			if _, _, _, err := c.api.SendMessage(channel.GetName(), content,
 				slack.MsgOptionAsUser(false),
 				slack.MsgOptionIconURL(iconURL),

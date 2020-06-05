@@ -13,6 +13,9 @@ type Message struct {
 	From      string
 	To        string
 	Text      string
+	Title     string
+	Link      string
+	Color     string
 	Markdown  string
 	Timestamp int64
 	IsHuman   bool

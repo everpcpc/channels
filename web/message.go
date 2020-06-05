@@ -12,6 +12,9 @@ import (
 type message struct {
 	Target   string
 	Text     string
+	Title    string
+	Link     string
+	Color    string
 	Markdown string
 }
 
@@ -38,6 +41,9 @@ func (s *Server) postMessage(c *gin.Context) {
 		From:      caller.Name,
 		To:        msg.Target,
 		Text:      msg.Text,
+		Title:     msg.Title,
+		Link:      msg.Link,
+		Color:     msg.Color,
 		Markdown:  msg.Markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
