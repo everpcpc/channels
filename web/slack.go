@@ -70,7 +70,7 @@ func (s *Server) slackEvents(api *slack.Client) func(*gin.Context) {
 					Source:    storage.MessageSourceSlack,
 					From:      username,
 					To:        channel,
-					Text:      msg.Text,
+					Text:      api.TranslateMentions(msg.Text),
 					Timestamp: time.Now().UnixNano(),
 					IsHuman:   true,
 				}

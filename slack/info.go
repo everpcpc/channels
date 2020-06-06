@@ -1,9 +1,15 @@
 package slack
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"channels/storage"
+)
+
+var (
+	reMention = regexp.MustCompile(`<(@|#)([0-9A-Z]+)>`)
 )
 
 func (c *Client) GetUserName(uid string) (string, error) {
@@ -25,5 +31,23 @@ func (c *Client) GetChannelName(cid string) (string, error) {
 			return "", err
 		}
 		return "#" + channel.Name, nil
+	})
+}
+
+func (c *Client) TranslateMentions(text string) string {
+	return replaceAllStringSubmatchFunc(reMention, text, func(groups []string) string {
+		indicator := groups[0]
+		name := groups[1]
+		switch indicator {
+		case "#":
+			if n, err := c.GetChannelName(name); err == nil {
+				name = n
+			}
+		case "@":
+			if n, err := c.GetUserName(name); err == nil {
+				name = n
+			}
+		}
+		return fmt.Sprintf("<%s%s>", indicator, name)
 	})
 }
