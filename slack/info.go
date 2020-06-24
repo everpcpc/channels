@@ -36,8 +36,8 @@ func (c *Client) GetChannelName(cid string) (string, error) {
 
 func (c *Client) TranslateMentions(text string) string {
 	return replaceAllStringSubmatchFunc(reMention, text, func(groups []string) string {
-		indicator := groups[0]
-		name := groups[1]
+		indicator := groups[1]
+		name := groups[2]
 		switch indicator {
 		case "#":
 			if n, err := c.GetChannelName(name); err == nil {
