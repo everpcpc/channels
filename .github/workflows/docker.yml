@@ -21,3 +21,4 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: everpcpc/channels
         tags: latest
+        tag_with_ref: true
