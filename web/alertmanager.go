@@ -1,10 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
-	"text/template" 
 
 	"github.com/gin-gonic/gin"
 
@@ -34,29 +35,6 @@ type alertManagerMessage struct {
 		Fingerprint  string
 	}
 }
-
-contentTemplate, err := template.New("test").Parse(`[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
-     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
-       {{" "}}(
-       {{- with .CommonLabels.Remove .GroupLabels.Names }}
-         {{- range $index, $label := .SortedPairs -}}
-           {{ if $index }}, {{ end }}
-           {{- $label.Name }}="{{ $label.Value -}}"
-         {{- end }}
-       {{- end -}}
-       )
-     {{- end }}
-     {{ range .Alerts -}}
-     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `+ "`{{ .Labels.severity }}`" +`{{ end }}
-
-     *Description:* {{ .Annotations.description }}
-
-     *Details:*
-       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `+"`{{ .Value }}`" + `
-       {{ end }}
-     {{ end }}`)
-if err != nil { panic(err) }
-
 
 // webhookAlertManager handles request from alertmanager as a webhook
 func (s *Server) webhookAlertManager(c *gin.Context) {
@@ -96,12 +74,37 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		labels = append(labels, k+"="+v)
 	}
 	text += "labels{" + strings.Join(labels, ",") + "}"
-	
+
+	contentTemplate, err := template.New("content").Parse(`[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}
+     {{ range .Alerts -}}
+     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - ` + "`{{ .Labels.severity }}`" + `{{ end }}
+
+     *Description:* {{ .Annotations.description }}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* ` + "`{{ .Value }}`" + `
+       {{ end }}
+     {{ end }}`)
+	if err != nil {
+		panic(err)
+	}
+
 	var tpl bytes.Buffer
 	if err := contentTemplate.Execute(&tpl, msg); err != nil {
-		return err
+		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
+		return
 	}
-	
+
 	markdown := tpl.String()
 	m := storage.Message{
 		Source:    storage.MessageSourceWebhook,
