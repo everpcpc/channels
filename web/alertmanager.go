@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"text/template" 
 
 	"github.com/gin-gonic/gin"
 
@@ -64,13 +65,6 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		msg.CommonAnnotations["summary"],
 		msg.ExternalURL,
 	)
-	markdown := fmt.Sprintf("%s <%s|[%s:%s] is %s: %s>\n",
-		getStatusEmoji(msg.Status),
-		msg.ExternalURL,
-		msg.GroupLabels["alertname"], msg.Version,
-		msg.CommonLabels["severity"],
-		msg.CommonAnnotations["summary"],
-	)
 	var labels []string
 	for k, v := range msg.CommonLabels {
 		if k == "alertname" || k == "severity" {
@@ -79,12 +73,34 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		labels = append(labels, k+"="+v)
 	}
 	text += "labels{" + strings.Join(labels, ",") + "}"
-	markdown += "`labels{" + strings.Join(labels, ",") + "}`\n"
+	contentTemplate, err := template.New("test").Parse(`[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}
+     {{ range .Alerts -}}
+     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
 
-	for _, alert := range msg.Alerts {
-		markdown += fmt.Sprintf("> <%s|%s>",
-			alert.GeneratorURL, alert.Annotations["summary"])
+     *Description:* {{ .Annotations.description }}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+       {{ end }}
+     {{ end }}`)
+	if err != nil { panic(err) }
+	
+	var tpl bytes.Buffer
+	if err := titleTemplate.Execute(&tpl, msg); err != nil {
+		return err
 	}
+	
+	markdown = tpl.String()
 	m := storage.Message{
 		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
