@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-    "github.com/sirupsen/logrus"
-    promtemplate "github.com/prometheus/alertmanager/template"
+	promtemplate "github.com/prometheus/alertmanager/template"
+	"github.com/sirupsen/logrus"
 
 	"channels/auth"
 	"channels/storage"
@@ -54,8 +54,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 	}
 	text += "labels{" + strings.Join(labels, ",") + "}"
 
-
-    titleTemplate, err := template.New("title").Parse(`[{{ .Status }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+	titleTemplate, err := template.New("title").Parse(`[{{ .Status }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
       {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
         {{" "}}(
         {{- with .CommonLabels.Remove .GroupLabels.Names }}
@@ -85,7 +84,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 
 	var tpl1 bytes.Buffer
 	if err := titleTemplate.Execute(&tpl1, msg); err != nil {
-        logrus.Errorf("Unable to parse template: %2", err.Error())
+		logrus.Errorf("Unable to parse template: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -94,7 +93,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 
 	var tpl2 bytes.Buffer
 	if err := contentTemplate.Execute(&tpl2, msg); err != nil {
-        logrus.Errorf("Unable to parse template: %2", err.Error())
+		logrus.Errorf("Unable to parse template: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -104,14 +103,14 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        caller.Caps[0],
-        Title:     title,
+		Title:     title,
 		Text:      text,
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
 
 	if err := s.store.Save(&m); err != nil {
-        logrus.Errorf("Unable to send message: %2", err.Error())
+		logrus.Errorf("Unable to send message: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
