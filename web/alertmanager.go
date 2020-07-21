@@ -70,41 +70,42 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		panic(err)
 	}
 
-	contentTemplate, err := template.New("content").Parse(`{{ range .Alerts -}}
+	contentTemplate, err := template.New("content").Parse(`*AlertURL:* <{{ .ExternalURL }}| see more alerts>
+{{ range .Alerts -}}
 *Alert:* {{if .Annotations.title }}{{ .Annotations.title }} {{ else }}{{ .Labels.alertname}}{{ end }}{{ if .Labels.severity }} - ` + "`{{ .Labels.severity }}`" + `{{ end }}
+*PromethusLink:* <{{ .GeneratorURL }}| see promethus source>
 *Description:* {{ .Annotations.description }}
 *Details:*
-       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* ` + "`{{ .Value }}`" + `
-       {{ end }}
-     {{ end }}`)
+{{ range .Labels.SortedPairs }} • *{{ .Name }}:* ` + "`{{ .Value }}`" + `
+{{ end }}
+{{ end }}`)
 	if err != nil {
 		panic(err)
 	}
 
-	var tpl bytes.Buffer
-	if err := titleTemplate.Execute(&tpl, msg); err != nil {
+	var tpl1 bytes.Buffer
+	if err := titleTemplate.Execute(&tpl1, msg); err != nil {
         fmt.Println(err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	title := tpl.String()
+	title := tpl1.String()
 
-	if err := contentTemplate.Execute(&tpl, msg); err != nil {
+	var tpl2 bytes.Buffer
+	if err := contentTemplate.Execute(&tpl2, msg); err != nil {
         fmt.Println(err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	markdown := tpl.String()
-    fmt.Println(markdown)
+	markdown := tpl2.String()
 	m := storage.Message{
 		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        caller.Caps[0],
         Title:     title,
 		Text:      text,
-        Color:     "#2eb886",
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
