@@ -100,7 +100,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		return err
 	}
 	
-	markdown = tpl.String()
+	markdown := tpl.String()
 	m := storage.Message{
 		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
