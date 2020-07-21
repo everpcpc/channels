@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+    "github.com/sirupsen/logrus"
     promtemplate "github.com/prometheus/alertmanager/template"
 
 	"channels/auth"
@@ -37,7 +38,6 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-    fmt.Println(msg)
 	text := fmt.Sprintf("%s [%s] is %s: %s\n( %s )\n",
 		getStatusEmoji(msg.Status),
 		msg.GroupLabels["alertname"],
@@ -85,7 +85,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 
 	var tpl1 bytes.Buffer
 	if err := titleTemplate.Execute(&tpl1, msg); err != nil {
-        fmt.Println(err.Error())
+        logrus.Errorf("Unable to parse template: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -94,7 +94,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 
 	var tpl2 bytes.Buffer
 	if err := contentTemplate.Execute(&tpl2, msg); err != nil {
-        fmt.Println(err.Error())
+        logrus.Errorf("Unable to parse template: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -111,7 +111,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 	}
 
 	if err := s.store.Save(&m); err != nil {
-        fmt.Println(err.Error())
+        logrus.Errorf("Unable to send message: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
