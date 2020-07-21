@@ -1,38 +1,19 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	promtemplate "github.com/prometheus/alertmanager/template"
+	"github.com/sirupsen/logrus"
 
 	"channels/auth"
 	"channels/storage"
 )
-
-// alertManagerMessage from:
-// https://prometheus.io/docs/alerting/configuration/#webhook_config
-// https://github.com/prometheus/alertmanager/blob/66a0ed21bdb0720b4ba083d35acd6ae77fa7b0b5/template/template.go#L227
-type alertManagerMessage struct {
-	Version           string
-	GroupKey          string
-	Status            string
-	Receiver          string
-	GroupLabels       map[string]string
-	CommonLabels      map[string]string
-	CommonAnnotations map[string]string
-	ExternalURL       string
-	Alerts            []struct {
-		Status       string
-		Labels       map[string]string
-		Annotations  map[string]string
-		StartsAt     time.Time
-		EndsAt       time.Time
-		GeneratorURL string
-		Fingerprint  string
-	}
-}
 
 // webhookAlertManager handles request from alertmanager as a webhook
 func (s *Server) webhookAlertManager(c *gin.Context) {
@@ -52,24 +33,17 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		return
 	}
 
-	var msg alertManagerMessage
+	var msg promtemplate.Data
 	if err := c.BindJSON(&msg); err != nil {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	text := fmt.Sprintf("%s [%s:%s] is %s: %s\n( %s )\n",
+	text := fmt.Sprintf("%s [%s] is %s: %s\n( %s )\n",
 		getStatusEmoji(msg.Status),
-		msg.GroupLabels["alertname"], msg.Version,
+		msg.GroupLabels["alertname"],
 		msg.CommonLabels["severity"],
 		msg.CommonAnnotations["summary"],
 		msg.ExternalURL,
-	)
-	markdown := fmt.Sprintf("%s <%s|[%s:%s] is %s: %s>\n",
-		getStatusEmoji(msg.Status),
-		msg.ExternalURL,
-		msg.GroupLabels["alertname"], msg.Version,
-		msg.CommonLabels["severity"],
-		msg.CommonAnnotations["summary"],
 	)
 	var labels []string
 	for k, v := range msg.CommonLabels {
@@ -79,22 +53,64 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		labels = append(labels, k+"="+v)
 	}
 	text += "labels{" + strings.Join(labels, ",") + "}"
-	markdown += "`labels{" + strings.Join(labels, ",") + "}`\n"
 
-	for _, alert := range msg.Alerts {
-		markdown += fmt.Sprintf("> <%s|%s>",
-			alert.GeneratorURL, alert.Annotations["summary"])
+	titleTemplate, err := template.New("title").Parse(`[{{ .Status }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+      {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+        {{" "}}(
+        {{- with .CommonLabels.Remove .GroupLabels.Names }}
+          {{- range $index, $label := .SortedPairs -}}
+            {{ if $index }}, {{ end }}
+            {{- $label.Name }}="{{ $label.Value -}}"
+          {{- end }}
+        {{- end -}}
+        )
+      {{- end }}`)
+	if err != nil {
+		panic(err)
 	}
+
+	contentTemplate, err := template.New("content").Parse(`*AlertURL:* <{{ .ExternalURL }}| see more alerts>
+{{ range .Alerts -}}
+*Alert:* {{if .Annotations.title }}{{ .Annotations.title }} {{ else }}{{ .Labels.alertname}}{{ end }}{{ if .Labels.severity }} - ` + "`{{ .Labels.severity }}`" + `{{ end }}
+*PromethusLink:* <{{ .GeneratorURL }}| see promethus source>
+*Description:* {{ .Annotations.description }}
+*Details:*
+{{ range .Labels.SortedPairs }} • *{{ .Name }}:* ` + "`{{ .Value }}`" + `
+{{ end }}
+{{ end }}`)
+	if err != nil {
+		panic(err)
+	}
+
+	var tpl1 bytes.Buffer
+	if err := titleTemplate.Execute(&tpl1, msg); err != nil {
+		logrus.Errorf("Unable to parse template: %2", err.Error())
+		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	title := tpl1.String()
+
+	var tpl2 bytes.Buffer
+	if err := contentTemplate.Execute(&tpl2, msg); err != nil {
+		logrus.Errorf("Unable to parse template: %2", err.Error())
+		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	markdown := tpl2.String()
 	m := storage.Message{
 		Source:    storage.MessageSourceWebhook,
 		From:      caller.Name,
 		To:        caller.Caps[0],
+		Title:     title,
 		Text:      text,
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
 	}
 
 	if err := s.store.Save(&m); err != nil {
+		logrus.Errorf("Unable to send message: %2", err.Error())
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
 	}
