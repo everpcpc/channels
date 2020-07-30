@@ -104,6 +104,7 @@ func (s *Server) webhookAlertManager(c *gin.Context) {
 		From:      caller.Name,
 		To:        caller.Caps[0],
 		Title:     title,
+		Color:     getStatusColor(msg.Status),
 		Text:      text,
 		Markdown:  markdown,
 		Timestamp: time.Now().UnixNano(),
@@ -126,4 +127,14 @@ func getStatusEmoji(status string) string {
 		return "✅"
 	}
 	return status
+}
+
+func getStatusColor(status string) string {
+	switch status {
+	case "firing":
+		return "#dc3545"
+	case "resolved":
+		return "#28a745"
+	}
+	return "#17a2b8"
 }
