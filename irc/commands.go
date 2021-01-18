@@ -21,4 +21,5 @@ var (
 	cmdTopic   = message{command: "TOPIC"}
 	cmdUser    = message{command: "USER"}
 	cmdWho     = message{command: "WHO"}
+	cmdCap     = message{command: "CAP"}
 )

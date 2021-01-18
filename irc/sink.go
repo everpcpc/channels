@@ -14,7 +14,7 @@ const (
 
 type sink func(message)
 
-func messageSink(conn connection) func(msg *storage.Message) {
+func messageSink(conn connection, caps map[string]struct{}) func(msg *storage.Message) {
 	return func(msg *storage.Message) {
 		// ignore message from self
 		if msg.Source == storage.MessageSourceIRC {
@@ -29,6 +29,7 @@ func messageSink(conn connection) func(msg *storage.Message) {
 
 		send := func(s string) {
 			msgToSend := cmdPrivMsg.
+				withMessageTag(msg, caps).
 				withPrefix(msg.From).
 				withParams(target).
 				withTrailing(s)
