@@ -3,22 +3,24 @@ package irc
 import (
 	"strings"
 
+	"channels/state"
 	"channels/storage"
 )
 
 type message struct {
-	msgTag   string
+	msgTag   map[string]string
 	prefix   string
 	command  string
 	params   []string
 	trailing string
 }
 
-func (m message) withMessageTag(msg *storage.Message, caps map[string]struct{}) message {
+func (m message) withMessageTag(msg *storage.Message, caps state.Capbilities) message {
+	handler := supportedCaps[capMsgTag]
 	if _, ok := caps[capMsgTag]; ok {
-		m.msgTag = supportedCaps[capMsgTag].handle(msg)
+		return *handler.handle(msg, &m)
 	} else {
-		m.msgTag = ""
+		m.msgTag = nil
 	}
 	return m
 }
@@ -64,8 +66,9 @@ func (m message) toString() (string, bool) {
 
 	var msg string
 
-	if len(m.msgTag) > 0 {
-		msg = m.msgTag + " "
+	if (m.msgTag != nil) {
+		handler := supportedCaps[capMsgTag]
+		msg = handler.toString(&m)
 	} else {
 		msg = ""
 	}

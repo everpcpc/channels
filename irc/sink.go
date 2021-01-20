@@ -4,17 +4,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"channels/state"
 	"channels/storage"
 )
 
 const (
 	IRC_MAX_MESSAGE_LENGTH = 512
+	IRC_MAX_MESSAGE_TAG_LENGTH = 8191
 )
 
 type sink func(message)
 
-func messageSink(conn connection, caps map[string]struct{}) func(msg *storage.Message) {
+func messageSink(conn connection, caps state.Capbilities) func(msg *storage.Message) {
 	return func(msg *storage.Message) {
 		// ignore message from self
 		if msg.Source == storage.MessageSourceIRC {
@@ -49,14 +52,24 @@ func messageSink(conn connection, caps map[string]struct{}) func(msg *storage.Me
 	}
 }
 
-func sendMessageBack(s state.State, user, target, text string) error {
+func sendMessageBack(s state.State, user *state.User, ircMsg *message, target, text string) error {
+	logrus.Debugf("-- sending back ")
 	m := storage.Message{
 		Source:    storage.MessageSourceIRC,
-		From:      user,
+		From:      user.GetName(),
 		To:        target,
 		Text:      text,
 		Timestamp: time.Now().UnixNano(),
 		IsHuman:   true,
 	}
+
+	// caps handler to handle caps for storage
+	caps := user.GetCaps()
+	for cap, _ := range caps {
+		handler := supportedCaps[cap]
+		handler.toStorageMsg(ircMsg, &m, caps)
+	}
+	logrus.Debugf("-- send msg %v back", m)
+	
 	return s.SendMessage(&m)
 }

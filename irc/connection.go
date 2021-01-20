@@ -96,6 +96,7 @@ func (c *connectionImpl) readLoop() {
 			}
 
 			didQuit = didQuit || msg.command == cmdQuit.command
+			logrus.Debugf("SEND MSG %v to handler ..", msg)
 			c.handler = c.handler.handle(c, msg)
 		}
 	}

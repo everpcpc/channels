@@ -1,6 +1,7 @@
 package irc
 
 import (
+	"strings"
 	"github.com/sirupsen/logrus"
 
 	"channels/state"
@@ -13,7 +14,7 @@ type freshHandler struct {
 	pass        string
 	v3CapClient bool
 	capEnd      bool
-	caps        map[string]struct{}
+	caps        state.Capbilities
 }
 
 func newFreshHandler(s chan state.State) handler {
@@ -50,8 +51,41 @@ func (h *freshHandler) handleCap(conn connection, msg message) handler {
 	} else {
 		logrus.Debugf("get msg: %v", msg)
 		h.v3CapClient = true
-		h.capEnd = true
-		h.caps["message-tag"] = struct{}{}
+		h.capEnd = false
+		switch msg.params[0] {
+		case "LS":
+			SendServerCap(conn.send, msg, SERVER_CAPS_LS_RESP, "*", "LS")
+		case "REQ":
+			requiredCaps := strings.Split(msg.trailing, " ")
+			if len(requiredCaps) < 1 {
+				sendNumeric(s, conn.send, errorInvalidCapCmd)
+			}
+			var ackCaps []string
+			var nakCaps []string
+			for _, cap := range requiredCaps {
+				if _, ok := supportedCaps[cap]; ok {
+					ackCaps = append(ackCaps, cap)
+				} else {
+					nakCaps = append(nakCaps, cap)
+				}
+			}
+
+			// cap grant
+			if len(ackCaps) > 0 {
+				SendServerCap(conn.send, msg, strings.Join(ackCaps, " "), "*", "ACK")
+				for _, cap := range ackCaps {
+					h.caps[cap] = struct{}{}
+				}
+			}
+			// cap denied
+			if len(nakCaps) > 0 {
+				SendServerCap(conn.send, msg, strings.Join(nakCaps, " "), "*", "NAK")
+			}
+		case "END":
+			h.capEnd = true
+		default:
+			sendNumeric(s, conn.send, errorInvalidCapCmd)
+		}
 	}
 	return h
 }
@@ -100,7 +134,9 @@ func (h *freshHandler) handleNick(conn connection, msg message) handler {
 	}
 
 	if h.capEnd {
-		s.SetUserCap(user, capMsgTag)
+		for cap, _ := range h.caps {
+			s.SetUserCap(user, cap)
+		}
 	}
 
 	user.AddRoles(caller.Roles...)

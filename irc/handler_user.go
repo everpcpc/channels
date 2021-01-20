@@ -44,10 +44,12 @@ func (h *userHandler) closed(conn connection) {
 }
 
 func (h *userHandler) handle(conn connection, msg message) handler {
+	logrus.Debugf("HANDLE -------------")
 	s := <-h.state
 	defer func() { h.state <- s }()
 
 	command := h.commands[msg.command]
+	logrus.Debugf("COMMANDS ----: %s", msg.command)
 	if command == nil {
 		return h
 	}
@@ -121,6 +123,7 @@ func (h *userHandler) handleCmdNames(s state.State, user *state.User, conn conne
 }
 
 func (h *userHandler) handleCmdPrivMsg(s state.State, user *state.User, conn connection, msg message) handler {
+	logrus.Debugf("HANDLE PRIV MSG ================")
 	if len(msg.params) < 1 {
 		sendNumericUser(s, user, conn.send, errorNoRecipient)
 		return h
@@ -136,7 +139,8 @@ func (h *userHandler) handleCmdPrivMsg(s state.State, user *state.User, conn con
 	if !strings.HasPrefix(target, "#") {
 		return h
 	}
-	err := sendMessageBack(s, user.GetName(), target, msgContents)
+	
+	err := sendMessageBack(s, user, &msg, target, msgContents)
 	if err != nil {
 		sendNumericUser(s, user, conn.send, errorNoTextToSend)
 	}

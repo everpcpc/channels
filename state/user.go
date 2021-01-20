@@ -7,13 +7,15 @@ import (
 	"channels/storage"
 )
 
+type Capbilities map[string]struct{}
+
 type User struct {
 	name     string
 	channels map[*Channel]bool
 	roles    []string
-	caps     map[string]struct{}
+	caps     Capbilities
 
-	send func(*storage.Message, *map[string]struct{})
+	send func(*storage.Message)
 }
 
 func (u *User) String() string {
@@ -54,6 +56,6 @@ func (u *User) AddCap(cap string) {
 	u.caps[cap] = struct{}{}
 }
 
-func (u *User) GetCaps() map[string]struct{} {
+func (u *User) GetCaps() Capbilities {
 	return u.caps
 }
