@@ -6,11 +6,9 @@ import (
 	"net"
 	"regexp"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
-const IRC_MAX_MSG_LEN_WITH_TAG = IRC_MAX_MESSAGE_TAG_LENGTH + IRC_MAX_MESSAGE_LENGTH
+const MaxMsgLenWithTag = MaxMessageTagLength + MaxMessageLength
 
 // messageParser is a function that returns a Message and a boolean indicating
 // if the end of the stream has been reached. If the boolean is false, then the
@@ -23,7 +21,7 @@ type messageParser func() (message, bool)
 func newMessageParser(reader io.Reader) messageParser {
 	bufReader := bufio.NewReader(reader)
 	buffer := make([]byte, 1)
-	parseBuffer := make([]byte, 0, IRC_MAX_MSG_LEN_WITH_TAG)
+	parseBuffer := make([]byte, 0, MaxMsgLenWithTag)
 
 	var newConsumeNewLineState func(func() (message, bool)) func() (message, bool)
 	var newParseState func() func() (message, bool)
@@ -86,7 +84,7 @@ func newMessageParser(reader io.Reader) messageParser {
 		fn = func() (message, bool) {
 			// If the parse buffer has filled up, then throwaway input until a new
 			// line character is encountered.
-			if len(parseBuffer) == IRC_MAX_MSG_LEN_WITH_TAG {
+			if len(parseBuffer) == MaxMsgLenWithTag {
 				currentState = throwAwayState
 				return currentState()
 			}
@@ -129,7 +127,7 @@ var tags = `(@.+? {1}?)?`
 var prefix = `(?::([^ ]+) )?`
 var command = `([a-zA-Z]+|[0-9]{3})`
 var params = `( .*)?`
-var messageRegex = regexp.MustCompile(`^`+ tags + prefix + command + params + `$`)
+var messageRegex = regexp.MustCompile(`^` + tags + prefix + command + params + `$`)
 
 // parseMessage takes a raw line from the IRC protocol (minus the trailing CRLF)
 // and returns a parsed Message and a bool indicating success.
@@ -150,7 +148,6 @@ func parseMessage(line string) (message, bool) {
 	msg.params = make([]string, 0)
 	msg.msgTag = make(map[string]string)
 
-	logrus.Debugf("------------------>: tags -> %s\nprefix -> %s", parts[1], parts[2])
 	// Split the parameters into separate strings.
 	i := 0
 	for i < len(parts[4])-1 {
@@ -184,7 +181,7 @@ func parseMessage(line string) (message, bool) {
 
 	// split msg tag
 	if parts[1] != "" {
-		if len(parts[1]) > IRC_MAX_MESSAGE_TAG_LENGTH {
+		if len(parts[1]) > MaxMessageTagLength {
 			return msg, false
 		}
 		tags := strings.Split(parts[1][1:len(parts[1])-1], ";")

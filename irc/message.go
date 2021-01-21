@@ -66,7 +66,7 @@ func (m message) toString() (string, bool) {
 
 	var msg string
 
-	if (m.msgTag != nil) {
+	if m.msgTag != nil {
 		handler := supportedCaps[capMsgTag]
 		msg = handler.toString(&m)
 	} else {

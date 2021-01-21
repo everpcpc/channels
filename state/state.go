@@ -227,7 +227,7 @@ func (s *stateImpl) UserHasCapOf(user *User, cap string) bool {
 
 func (s *stateImpl) SetUserCap(user *User, cap string) error {
 	if u, ok := s.users[user.name]; !ok {
-		return fmt.Errorf("User %s can not be found on state.", user.name)
+		return fmt.Errorf("user %s can not be found on state", user.name)
 	} else {
 		if _, ok = u.caps[cap]; !ok {
 			u.AddCap(cap)

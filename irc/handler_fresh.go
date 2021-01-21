@@ -1,8 +1,8 @@
 package irc
 
 import (
-	"strings"
 	"github.com/sirupsen/logrus"
+	"strings"
 
 	"channels/state"
 )
@@ -54,7 +54,7 @@ func (h *freshHandler) handleCap(conn connection, msg message) handler {
 		h.capEnd = false
 		switch msg.params[0] {
 		case "LS":
-			SendServerCap(conn.send, msg, SERVER_CAPS_LS_RESP, "*", "LS")
+			SendServerCap(conn.send, msg, ServerCapsLsResp, "*", "LS")
 		case "REQ":
 			requiredCaps := strings.Split(msg.trailing, " ")
 			if len(requiredCaps) < 1 {
@@ -134,8 +134,11 @@ func (h *freshHandler) handleNick(conn connection, msg message) handler {
 	}
 
 	if h.capEnd {
-		for cap, _ := range h.caps {
-			s.SetUserCap(user, cap)
+		for c, _ := range h.caps {
+			err := s.SetUserCap(user, c)
+			if err != nil {
+				logrus.Warnf("set cap %s for user %s error: %v", c, user.GetName(), err)
+			}
 		}
 	}
 
