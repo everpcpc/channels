@@ -1,6 +1,8 @@
 package state
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 
 	"channels/auth"
@@ -53,6 +55,10 @@ type State interface {
 	// not send any messages to the channel or user. The channel will also be
 	// reaped if there are no active users left.
 	RemoveFromChannel(*Channel, *User)
+
+	// Irc v3 cap command
+	UserHasCapOf(*User, string) bool
+	SetUserCap(*User, string) error
 
 	SendMessage(*storage.Message) error
 
@@ -108,6 +114,7 @@ func (s *stateImpl) NewUser(name string) *User {
 	u := &User{
 		name:     name,
 		channels: make(map[*Channel]bool),
+		caps:     make(map[string]struct{}),
 	}
 	s.users[nameLower] = u
 	logrus.Debugf("new user %s", name)
@@ -203,6 +210,30 @@ func (s *stateImpl) RemoveFromChannel(channel *Channel, user *User) {
 
 func (s *stateImpl) SendMessage(msg *storage.Message) error {
 	return s.store.Save(msg)
+}
+
+func (s *stateImpl) UserHasCapOf(user *User, cap string) bool {
+	if u, ok := s.users[user.name]; !ok {
+		logrus.Debugf("User %s can not be found on state.", user.name)
+		return false
+	} else {
+		if _, ok = u.caps[cap]; ok {
+			return true
+		} else {
+			return false
+		}
+	}
+}
+
+func (s *stateImpl) SetUserCap(user *User, cap string) error {
+	if u, ok := s.users[user.name]; !ok {
+		return fmt.Errorf("user %s can not be found on state", user.name)
+	} else {
+		if _, ok = u.caps[cap]; !ok {
+			u.AddCap(cap)
+		}
+	}
+	return nil
 }
 
 func (s *stateImpl) Pulling() {

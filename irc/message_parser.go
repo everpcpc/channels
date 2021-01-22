@@ -5,7 +5,10 @@ import (
 	"io"
 	"net"
 	"regexp"
+	"strings"
 )
+
+const MaxMsgLenWithTag = MaxMessageTagLength + MaxMessageLength
 
 // messageParser is a function that returns a Message and a boolean indicating
 // if the end of the stream has been reached. If the boolean is false, then the
@@ -18,7 +21,7 @@ type messageParser func() (message, bool)
 func newMessageParser(reader io.Reader) messageParser {
 	bufReader := bufio.NewReader(reader)
 	buffer := make([]byte, 1)
-	parseBuffer := make([]byte, 0, 512)
+	parseBuffer := make([]byte, 0, MaxMsgLenWithTag)
 
 	var newConsumeNewLineState func(func() (message, bool)) func() (message, bool)
 	var newParseState func() func() (message, bool)
@@ -81,7 +84,7 @@ func newMessageParser(reader io.Reader) messageParser {
 		fn = func() (message, bool) {
 			// If the parse buffer has filled up, then throwaway input until a new
 			// line character is encountered.
-			if len(parseBuffer) == 512 {
+			if len(parseBuffer) == MaxMsgLenWithTag {
 				currentState = throwAwayState
 				return currentState()
 			}
@@ -120,10 +123,11 @@ func newMessageParser(reader io.Reader) messageParser {
 // See RFC 952 for the definition of a host name.
 //var hostRegex = `[a-zA-Z](?:[a-zA-Z0-9.-]{,22}[a-zA-Z0-9])?`
 //var nickRegex = `[a-zA-Z][a-zA-Z0-9\-\[\]\\` + "`" + `^{}]*`
+var tags = `(@.+? {1}?)?`
 var prefix = `(?::([^ ]+) )?`
 var command = `([a-zA-Z]+|[0-9]{3})`
 var params = `( .*)?`
-var messageRegex = regexp.MustCompile(`^` + prefix + command + params + `$`)
+var messageRegex = regexp.MustCompile(`^` + tags + prefix + command + params + `$`)
 
 // parseMessage takes a raw line from the IRC protocol (minus the trailing CRLF)
 // and returns a parsed Message and a bool indicating success.
@@ -139,39 +143,58 @@ func parseMessage(line string) (message, bool) {
 		return msg, false
 	}
 
-	msg.prefix = parts[1]
-	msg.command = parts[2]
+	msg.prefix = parts[2]
+	msg.command = parts[3]
 	msg.params = make([]string, 0)
+	msg.msgTag = make(map[string]string)
 
 	// Split the parameters into separate strings.
 	i := 0
-	for i < len(parts[3])-1 {
+	for i < len(parts[4])-1 {
 		// Each parameter must begin with a space.
-		if parts[3][i] != ' ' {
+		if parts[4][i] != ' ' {
 			return msg, false
 		}
 		// Skip extra white space.
-		for parts[3][i] == ' ' {
+		for parts[4][i] == ' ' {
 			i++
 		}
 
 		// If the next character is a ':', then the parameter is the value of the
 		// remainder of the string.
-		if parts[3][i] == ':' {
-			msg.trailing = parts[3][i+1:]
+		if parts[4][i] == ':' {
+			msg.trailing = parts[4][i+1:]
 			break
 		}
 
 		// Otherwise the current parameter is the substring from i to either the
 		// first space or the end of the string.
 		start := i
-		for i < len(parts[3]) {
-			if parts[3][i] == ' ' {
+		for i < len(parts[4]) {
+			if parts[4][i] == ' ' {
 				break
 			}
 			i++
 		}
-		msg.params = append(msg.params, parts[3][start:i])
+		msg.params = append(msg.params, parts[4][start:i])
+	}
+
+	// split msg tag
+	if parts[1] != "" {
+		if len(parts[1]) > MaxMessageTagLength {
+			return msg, false
+		}
+		tags := strings.Split(parts[1][1:len(parts[1])-1], ";")
+		for _, t := range tags {
+			kv := strings.Split(t, "=")
+			if len(kv) == 1 {
+				msg.msgTag[kv[0]] = ""
+			} else if len(kv) == 2 {
+				msg.msgTag[kv[0]] = kv[1]
+			} else {
+				return msg, false
+			}
+		}
 	}
 
 	return msg, true

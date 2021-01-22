@@ -7,10 +7,13 @@ import (
 	"channels/storage"
 )
 
+type Capbilities map[string]struct{}
+
 type User struct {
 	name     string
 	channels map[*Channel]bool
 	roles    []string
+	caps     Capbilities
 
 	send func(*storage.Message)
 }
@@ -45,4 +48,14 @@ func (u *User) forChannels(callback func(*Channel)) {
 	for ch := range u.channels {
 		callback(ch)
 	}
+}
+
+// set client caps for user
+// ref: https://ircv3.net/specs/core/capability-negotiation.html
+func (u *User) AddCap(cap string) {
+	u.caps[cap] = struct{}{}
+}
+
+func (u *User) GetCaps() Capbilities {
+	return u.caps
 }

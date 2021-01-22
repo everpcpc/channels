@@ -39,3 +39,7 @@ func sendNames(s state.State, user *state.User, sink sink, channels ...*state.Ch
 		sendNumericUser(s, user, sink, replyEndOfNames.withTrailing("End NAMES"), channel.GetName())
 	}
 }
+
+func SendServerCap(sink sink, msg message, caps string, params ...string) {
+	sink(msg.withParams(params...).withTrailing(caps))
+}

@@ -67,12 +67,14 @@ func (s *Server) slackEvents(api *slack.Client) func(*gin.Context) {
 				}
 
 				m := storage.Message{
-					Source:    storage.MessageSourceSlack,
-					From:      username,
-					To:        channel,
-					Text:      api.TranslateMentions(msg.Text),
-					Timestamp: time.Now().UnixNano(),
-					IsHuman:   true,
+					Source:               storage.MessageSourceSlack,
+					From:                 username,
+					To:                   channel,
+					Text:                 api.TranslateMentions(msg.Text),
+					Timestamp:            time.Now().UnixNano(),
+					SlackThreadTimeStamp: msg.ThreadTimeStamp,
+					SlackTimeStamp:       msg.TimeStamp,
+					IsHuman:              true,
 				}
 
 				err = s.store.Save(&m)

@@ -177,4 +177,8 @@ var (
 		command:  "502",
 		trailing: "Users don't match",
 	}
+	errorInvalidCapCmd = message{
+		command:  "410",
+		trailing: "Invalid CAP command",
+	}
 )

@@ -2,13 +2,27 @@ package irc
 
 import (
 	"strings"
+
+	"channels/state"
+	"channels/storage"
 )
 
 type message struct {
+	msgTag   map[string]string
 	prefix   string
 	command  string
 	params   []string
 	trailing string
+}
+
+func (m message) withMessageTag(msg *storage.Message, caps state.Capbilities) message {
+	handler := supportedCaps[capMsgTag]
+	if _, ok := caps[capMsgTag]; ok {
+		return *handler.handle(msg, &m)
+	} else {
+		m.msgTag = nil
+	}
+	return m
 }
 
 // withParams creates a new copy of a message with the given parameters.
@@ -51,8 +65,16 @@ func (m message) toString() (string, bool) {
 	}
 
 	var msg string
+
+	if m.msgTag != nil {
+		handler := supportedCaps[capMsgTag]
+		msg = handler.toString(&m)
+	} else {
+		msg = ""
+	}
+
 	if len(m.prefix) > 0 {
-		msg = ":" + m.prefix + " "
+		msg += ":" + m.prefix + " "
 	}
 
 	msg += m.command

@@ -132,6 +132,7 @@ func (c *Client) Run() {
 				slack.MsgOptionAsUser(false),
 				slack.MsgOptionIconURL(iconURL),
 				slack.MsgOptionUsername(msg.From),
+				slack.MsgOptionTS(msg.SlackThreadTimeStamp),
 			); err != nil {
 				logrus.Errorf("send msg to %s failed: %v", channel.GetName(), err)
 			}

@@ -136,7 +136,8 @@ func (h *userHandler) handleCmdPrivMsg(s state.State, user *state.User, conn con
 	if !strings.HasPrefix(target, "#") {
 		return h
 	}
-	err := sendMessageBack(s, user.GetName(), target, msgContents)
+
+	err := sendMessageBack(s, user, &msg, target, msgContents)
 	if err != nil {
 		sendNumericUser(s, user, conn.send, errorNoTextToSend)
 	}
