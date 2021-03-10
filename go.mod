@@ -9,7 +9,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/prometheus/alertmanager v0.21.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/slack-go/slack v0.6.5
+	github.com/slack-go/slack v0.8.1
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1
 )

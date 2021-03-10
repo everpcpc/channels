@@ -19,7 +19,7 @@
         "botGravatarMail": "bot+%s@example.com",
         "humanGravatarMail": "%s@example.com",
         "joinChannels": [
-            "#general"
+            {"name": "#general", "id":  "<slack channel id>"}
         ]
     },
     "ldap": {

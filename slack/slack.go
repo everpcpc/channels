@@ -17,6 +17,11 @@ import (
 	"channels/storage"
 )
 
+type Conversation struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
 type Config struct {
 	Name         string
 	Token        string
@@ -26,7 +31,7 @@ type Config struct {
 	BotGravatarMail   string
 	HumanGravatarMail string
 
-	JoinChannels []string
+	JoinChannels []*Conversation
 }
 
 type Client struct {
@@ -35,7 +40,7 @@ type Client struct {
 	store storage.Backend
 	cache storage.CacheBackend
 
-	joinChannels []string
+	joinChannels []*Conversation
 
 	signedSecret string
 
@@ -78,16 +83,16 @@ func (c *Client) Run() {
 	go st.Pulling()
 
 	for _, ch := range c.joinChannels {
-		if !strings.HasPrefix(ch, "#") {
+		if !strings.HasPrefix(ch.Name, "#") {
 			continue
 		}
-		_, err := c.api.JoinChannel(ch)
+		_, warnings, _, err := c.api.JoinConversation(ch.ID)
 
 		if err != nil {
-			logrus.Warnf("join channel %s failed: %v", ch, err)
+			logrus.Warnf("join channel %s failed: %v, warning: %v", ch, err, warnings)
 			continue
 		}
-		channel := st.NewChannel(ch)
+		channel := st.NewChannel(ch.Name)
 		channel.SetSendFn(func(msg *storage.Message) {
 			// ignore message from self
 			if msg.Source == storage.MessageSourceSlack {
