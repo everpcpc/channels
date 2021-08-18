@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"channels/storage"
+
+	"github.com/slack-go/slack"
 )
 
 var (
@@ -14,7 +16,11 @@ var (
 
 func (c *Client) GetUserName(uid string) (string, error) {
 	return storage.Cached(c.cache, "slack:user:"+uid, func() (string, error) {
-		profile, err := c.api.GetUserProfile(uid, false)
+		profile, err := c.api.GetUserProfile(
+			&slack.GetUserProfileParameters{
+				UserID: uid, IncludeLabels: false,
+			},
+		)
 		if err != nil {
 			return "", err
 		}
@@ -26,7 +32,7 @@ func (c *Client) GetUserName(uid string) (string, error) {
 
 func (c *Client) GetChannelName(cid string) (string, error) {
 	return storage.Cached(c.cache, "slack:channel:"+cid, func() (string, error) {
-		channel, err := c.api.GetChannelInfo(cid)
+		channel, err := c.api.GetConversationInfo(cid, false)
 		if err != nil {
 			return "", err
 		}

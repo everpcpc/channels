@@ -17,11 +17,6 @@ import (
 	"channels/storage"
 )
 
-type Conversation struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
-}
-
 type Config struct {
 	Name         string
 	Token        string
@@ -31,7 +26,21 @@ type Config struct {
 	BotGravatarMail   string
 	HumanGravatarMail string
 
-	JoinChannels []*Conversation
+	JoinChannels []string
+
+	Forwards map[string]struct {
+		Token           string
+		ForwardChannels []struct {
+			Source string
+			Target string
+		}
+	}
+}
+
+type ForwardClient struct {
+	api *slack.Client
+
+	forwardChannels map[string]string
 }
 
 type Client struct {
@@ -40,12 +49,14 @@ type Client struct {
 	store storage.Backend
 	cache storage.CacheBackend
 
-	joinChannels []*Conversation
+	joinChannels []string
 
 	signedSecret string
 
 	botGravatarMail   string
 	humanGravatarMail string
+
+	forwards map[string]*ForwardClient
 }
 
 func NewClient(cfg *Config, store storage.Backend, cache storage.CacheBackend) (c *Client, err error) {
@@ -75,6 +86,15 @@ func NewClient(cfg *Config, store storage.Backend, cache storage.CacheBackend) (
 			},
 		},
 	))
+
+	for forwardName, forwardConfig := range cfg.Forwards {
+		c.forwards[forwardName] = &ForwardClient{
+			api: c.api,
+		}
+		for _, forwardChannel := range forwardConfig.ForwardChannels {
+			c.forwards[forwardName].forwardChannels[forwardChannel.Source] = forwardChannel.Target
+		}
+	}
 	return
 }
 
@@ -82,17 +102,61 @@ func (c *Client) Run() {
 	st := state.New(c.name, c.store, &auth.Anonymous{})
 	go st.Pulling()
 
-	for _, ch := range c.joinChannels {
-		if !strings.HasPrefix(ch.Name, "#") {
-			continue
-		}
-		_, warnings, _, err := c.api.JoinConversation(ch.ID)
-
+	var cursor string
+	for {
+		chs, cursor, err := c.api.GetConversations(&slack.GetConversationsParameters{
+			Cursor: cursor,
+			Types:  []string{"public_channel"},
+		})
 		if err != nil {
-			logrus.Warnf("join channel %s failed: %v, warning: %v", ch, err, warnings)
+			logrus.Errorf("get conversations failed: %s", err)
+		}
+		for _, ch := range chs {
+			if !contains(c.joinChannels, ch.Name) {
+				continue
+			}
+			_, warnings, _, err := c.api.JoinConversation(ch.ID)
+			if err != nil {
+				logrus.Warnf("join channel %s failed: %v, warning: %v", ch, err, warnings)
+				continue
+			}
+		}
+		if cursor == "" {
+			break
+		}
+	}
+
+	for name, fc := range c.forwards {
+		for {
+			chs, cursor, err := fc.api.GetConversations(&slack.GetConversationsParameters{
+				Cursor: cursor,
+				Types:  []string{"public_channel"},
+			})
+			if err != nil {
+				logrus.Errorf("get conversations for %s failed: %s", name, err)
+			}
+			for _, ch := range chs {
+				if !containsValue(fc.forwardChannels, ch.Name) {
+					continue
+				}
+				_, warnings, _, err := c.api.JoinConversation(ch.ID)
+				if err != nil {
+					logrus.Warnf("join channel %s failed: %v, warning: %v", ch, err, warnings)
+					continue
+				}
+			}
+			if cursor == "" {
+				break
+			}
+		}
+	}
+
+	for _, ch := range c.joinChannels {
+		if !strings.HasPrefix(ch, "#") {
 			continue
 		}
-		channel := st.NewChannel(ch.Name)
+
+		channel := st.NewChannel(ch)
 		channel.SetSendFn(func(msg *storage.Message) {
 			// ignore message from self
 			if msg.Source == storage.MessageSourceSlack {
@@ -140,6 +204,20 @@ func (c *Client) Run() {
 				slack.MsgOptionTS(msg.SlackThreadTimeStamp),
 			); err != nil {
 				logrus.Errorf("send msg to %s failed: %v", channel.GetName(), err)
+			}
+			for fname, forward := range c.forwards {
+				target := forward.forwardChannels[channel.GetName()]
+				if target == "" {
+					continue
+				}
+				if _, _, _, err := forward.api.SendMessage(target, content,
+					slack.MsgOptionAsUser(false),
+					slack.MsgOptionIconURL(iconURL),
+					slack.MsgOptionUsername(msg.From),
+					slack.MsgOptionTS(msg.SlackThreadTimeStamp),
+				); err != nil {
+					logrus.Errorf("send msg to %s in %s failed: %v", channel.GetName(), fname, err)
+				}
 			}
 		})
 	}

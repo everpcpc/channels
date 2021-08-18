@@ -19,8 +19,17 @@
         "botGravatarMail": "bot+%s@example.com",
         "humanGravatarMail": "%s@example.com",
         "joinChannels": [
-            {"name": "#general", "id":  "<slack channel id>"}
-        ]
+            "#general"
+        ],
+        "forwards": {
+            "subchannel": {
+                "token": "",
+                "forwardChannels": {
+                    "source": "#general_child",
+                    "target": "#general"
+                }
+            }
+        }
     },
     "ldap": {
         "url": "ldap://example.com:389",

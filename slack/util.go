@@ -19,3 +19,21 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 
 	return result + str[lastIndex:]
 }
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func containsValue(m map[string]string, s string) bool {
+	for _, v := range m {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
