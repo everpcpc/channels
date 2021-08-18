@@ -105,6 +105,7 @@ func (c *Client) Run() {
 	var cursor string
 	for {
 		chs, cursor, err := c.api.GetConversations(&slack.GetConversationsParameters{
+			Limit:  1000,
 			Cursor: cursor,
 			Types:  []string{"public_channel"},
 		})
@@ -129,6 +130,7 @@ func (c *Client) Run() {
 	for name, fc := range c.forwards {
 		for {
 			chs, cursor, err := fc.api.GetConversations(&slack.GetConversationsParameters{
+				Limit:  1000,
 				Cursor: cursor,
 				Types:  []string{"public_channel"},
 			})
