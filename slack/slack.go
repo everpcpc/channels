@@ -69,6 +69,7 @@ func NewClient(cfg *Config, store storage.Backend, cache storage.CacheBackend) (
 		botGravatarMail:   cfg.BotGravatarMail,
 		humanGravatarMail: cfg.HumanGravatarMail,
 		joinChannels:      cfg.JoinChannels,
+		forwards:          make(map[string]*ForwardClient),
 	}
 	if cfg.Proxy == "" {
 		c.api = slack.New(cfg.Token)
@@ -86,10 +87,17 @@ func NewClient(cfg *Config, store storage.Backend, cache storage.CacheBackend) (
 			},
 		},
 	))
-
 	for forwardName, forwardConfig := range cfg.Forwards {
+		fclient := slack.New(forwardConfig.Token, slack.OptionHTTPClient(
+			&http.Client{
+				Transport: &http.Transport{
+					Proxy: http.ProxyURL(proxyUrl),
+				},
+			},
+		))
 		c.forwards[forwardName] = &ForwardClient{
-			api: c.api,
+			api:             fclient,
+			forwardChannels: make(map[string]string),
 		}
 		for _, forwardChannel := range forwardConfig.ForwardChannels {
 			c.forwards[forwardName].forwardChannels[forwardChannel.Source] = forwardChannel.Target
@@ -113,7 +121,7 @@ func (c *Client) Run() {
 			logrus.Errorf("get conversations failed: %s", err)
 		}
 		for _, ch := range chs {
-			if !contains(c.joinChannels, ch.Name) {
+			if !contains(c.joinChannels, "#"+ch.Name) {
 				continue
 			}
 			_, warnings, _, err := c.api.JoinConversation(ch.ID)
@@ -138,12 +146,12 @@ func (c *Client) Run() {
 				logrus.Errorf("get conversations for %s failed: %s", name, err)
 			}
 			for _, ch := range chs {
-				if !containsValue(fc.forwardChannels, ch.Name) {
+				if !containsValue(fc.forwardChannels, "#"+ch.Name) {
 					continue
 				}
-				_, warnings, _, err := c.api.JoinConversation(ch.ID)
+				_, warnings, _, err := fc.api.JoinConversation(ch.ID)
 				if err != nil {
-					logrus.Warnf("join channel %s failed: %v, warning: %v", ch, err, warnings)
+					logrus.Warnf("join channel %s in %s failed: %v, warning: %v", ch.Name, name, err, warnings)
 					continue
 				}
 			}

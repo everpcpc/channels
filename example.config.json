@@ -24,10 +24,12 @@
         "forwards": {
             "subchannel": {
                 "token": "",
-                "forwardChannels": {
-                    "source": "#general_child",
-                    "target": "#general"
-                }
+                "forwardChannels": [
+                    {
+                        "source": "#general_child",
+                        "target": "#general"
+                    }
+                ]
             }
         }
     },
