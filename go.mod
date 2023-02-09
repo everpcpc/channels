@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/getsentry/sentry-go v0.11.0
-	github.com/gin-gonic/gin v1.7.4
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-ldap/ldap/v3 v3.4.1
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/prometheus/alertmanager v0.22.2
