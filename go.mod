@@ -10,7 +10,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/prometheus/alertmanager v0.22.2
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.8.3
 	github.com/slack-go/slack v0.9.4
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.8.3
